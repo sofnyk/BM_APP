@@ -83,13 +83,7 @@
 
         .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 
-        /* Γκρουπ κουμπιών για να είναι κολλητά το Άνοιγμα και η Λήψη */
-        .pdf-btn-group {
-            display: flex;
-            gap: 5px;
-            flex: 1;
-            min-width: 150px;
-        }
+        .pdf-btn-group { display: flex; gap: 5px; flex: 1; min-width: 150px; }
 
         .pdf-btn {
             background-color: var(--accent); color: white; text-decoration: none;
@@ -99,15 +93,10 @@
             box-shadow: 0 4px 0 #1e8449;
         }
 
-        .pdf-btn:hover { 
-            background-color: #2ecc71; 
-            transform: translateY(2px); 
-            box-shadow: 0 2px 0 #1e8449; 
-        }
+        .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
 
-        /* Το νέο κουμπάκι Λήψης (Σκούρο Μπλε) */
         .pdf-btn.download-btn {
-            flex: 0 0 auto; /* Δεν πιάνει όλο τον χώρο, πιάνει μόνο όσο χρειάζεται το βελάκι */
+            flex: 0 0 auto;
             background-color: var(--primary);
             box-shadow: 0 4px 0 #1a252f;
         }
@@ -209,13 +198,16 @@
                         
                         let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
                         
-                        // Το μαγικό link για απευθείας κατέβασμα
-                        let downloadUrl = url + '?download=';
+                        // Η ΜΑΓΕΙΑ ΓΙΑ ΤΟ DOWNLOAD:
+                        // 1. Ελέγχει αν το link έχει ήδη '?' για να βάλει '&' ή '?'
+                        // 2. Ζητάει από το Supabase να το στείλει ως 'attachment' με το σωστό όνομα
+                        let separator = url.includes('?') ? '&' : '?';
+                        let downloadUrl = url + separator + 'download=' + encodeURIComponent(cleanName + '.pdf');
                         
                         return `
                             <div class="pdf-btn-group">
                                 <a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>
-                                <a href="${downloadUrl}" class="pdf-btn download-btn" title="Απευθείας Λήψη (Download)" download>⬇️</a>
+                                <a href="${downloadUrl}" class="pdf-btn download-btn" title="Απευθείας Λήψη" download="${cleanName}.pdf">⬇️</a>
                             </div>
                         `;
                     }).join('');
