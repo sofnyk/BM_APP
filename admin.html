@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Διαχείριση Βιβλιοθήκης</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; color: #333; }
+        h1 { text-align: center; color: #2c3e50; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; height: 80vh; }
+        .column { flex: 1; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        h3 { margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #3498db; }
+        .scroll-list { flex: 1; overflow-y: auto; padding-right: 10px; }
+        
+        /* Στιλ για τα Βιβλία */
+        .book-item { padding: 12px; border-bottom: 1px solid #ecf0f1; cursor: pointer; transition: background 0.2s; border-radius: 5px; }
+        .book-item:hover { background-color: #f0f8ff; }
+        .book-item.selected { background-color: #d4e6f1; border-left: 5px solid #2980b9; font-weight: bold; }
+        .book-title { font-size: 1.1em; color: #2c3e50; }
+        .book-meta { font-size: 0.85em; color: #7f8c8d; margin-top: 4px; }
+        .linked-files { font-size: 0.85em; color: #27ae60; margin-top: 8px; font-weight: bold; }
+        
+        /* Στιλ για τα Αρχεία */
+        .file-item { padding: 8px; border-bottom: 1px dashed #ecf0f1; display: flex; align-items: center; gap: 10px; }
+        .file-item input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
+        .file-item label { cursor: pointer; width: 100%; word-break: break-all; }
+        
+        /* Κουμπί */
+        .link-btn { background-color: #27ae60; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; transition: background 0.3s; }
+        .link-btn:hover { background-color: #219150; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #95a5a6; }
+    </style>
+</head>
+<body>
+
+    <h1>Πάντρεμα Βιβλίων & Αρχείων PDF</h1>
+    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 900px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
+        <h3 style="margin-top: 0; color: #2c3e50;">➕ Προσθήκη Νέου Βιβλίου</h3>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <input type="text" id="newTitle" placeholder="Τίτλος (π.χ. Νέον Ειρμολόγιον)" style="padding: 10px; flex: 2; min-width: 200px; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="text" id="newAuthor" placeholder="Συγγραφέας (π.χ. Πέτρος)" style="padding: 10px; flex: 1.5; min-width: 150px; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="text" id="newYear" placeholder="Έτος (π.χ. 1825)" style="padding: 10px; flex: 0.5; min-width: 80px; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="addNewBook()" style="padding: 10px 20px; background: #2980b9; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s;">💾 Αποθήκευση</button>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="column">
+            <h3>1. Επίλεξε Βιβλίο (από τη βάση)</h3>
+            <div class="scroll-list" id="booksList">
+                <p>Φόρτωση βιβλίων...</p>
+            </div>
+        </div>
+
+        <div class="column">
+            <h3>2. Επίλεξε Αρχείο/α PDF</h3>
+            <div class="scroll-list" id="filesList">
+                <p>Φόρτωση αρχείων...</p>
+            </div>
+            <button class="link-btn" onclick="linkFiles()">🔗 Σύνδεση με το Βιβλίο!</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedBookId = null;
+
+        // Φόρτωση Δεδομένων από το API μας
+        async function loadData() {
+            try {
+                // Φέρνουμε τα βιβλία
+                const bookRes = await fetch('http://localhost:8000/books');
+                const bookData = await bookRes.json();
+                const booksList = document.getElementById('booksList');
+                booksList.innerHTML = '';
+                
+                bookData.data.forEach(book => {
+                    const div = document.createElement('div');
+                    div.className = 'book-item';
+                    div.onclick = () => selectBook(book.id, div);
+                    
+                    let linkedHtml = '';
+                    if (book.file_key) {
+                        linkedHtml = `<div class="linked-files">✔️ Έχει αρχεία: ${book.file_key}</div>`;
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="book-title">${book.id}. ${book.title}</div>
+                        <div class="book-meta">${book.author_publisher || ''} - ${book.publication_year || ''}</div>
+                        ${linkedHtml}
+                    `;
+                    booksList.appendChild(div);
+                });
+
+                // Φέρνουμε τα αρχεία PDF
+                const fileRes = await fetch('http://localhost:8000/files');
+                const fileData = await fileRes.json();
+                const filesList = document.getElementById('filesList');
+                filesList.innerHTML = '';
+                
+                fileData.data.forEach((file, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.innerHTML = `
+                        <input type="checkbox" id="file_${index}" value="${file}" class="file-checkbox">
+                        <label for="file_${index}">${file}</label>
+                    `;
+                    filesList.appendChild(div);
+                });
+            } catch (error) {
+                alert("Σφάλμα φόρτωσης. Σιγουρέψου ότι ο Σερβιτόρος (uvicorn) τρέχει στο μαύρο παράθυρο!");
+            }
+        }
+
+        // Τι γίνεται όταν κάνουμε κλικ σε ένα βιβλίο
+        function selectBook(id, element) {
+            selectedBookId = id;
+            document.querySelectorAll('.book-item').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // Τι γίνεται όταν πατάμε το κουμπί Σύνδεσης
+        async function linkFiles() {
+            if (!selectedBookId) {
+                alert('Σε παρακαλώ, επίλεξε πρώτα ένα βιβλίο από την αριστερή στήλη!');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+            const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedFiles.length === 0) {
+                alert('Σε παρακαλώ, τσέκαρε τουλάχιστον ένα αρχείο PDF από τη δεξιά στήλη!');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ book_id: selectedBookId, file_keys: selectedFiles })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    // Καθαρίζουμε τα checkboxes και ξαναφορτώνουμε τις λίστες για να δούμε την αλλαγή
+                    checkboxes.forEach(cb => cb.checked = false);
+                    loadData(); 
+                } else {
+                    alert('Κάτι πήγε στραβά: ' + result.message);
+                }
+            } catch (error) {
+                alert('Αποτυχία επικοινωνίας με τον server!');
+            }
+        }
+async function addNewBook() {
+            const titleInput = document.getElementById('newTitle');
+            const authorInput = document.getElementById('newAuthor');
+            const yearInput = document.getElementById('newYear');
+
+            if (!titleInput.value.trim()) {
+                alert('Ο Τίτλος είναι υποχρεωτικός!');
+                return;
+            }
+
+            try {
+                // Αν είσαι από το ίδιο PC βάλε 'http://localhost:8000/books'
+                // Αν χρησιμοποιείς ngrok/tablet, βάλε σκέτο '/books'
+                const response = await fetch('http://localhost:8000/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        title: titleInput.value.trim(), 
+                        author_publisher: authorInput.value.trim(), 
+                        publication_year: yearInput.value.trim() 
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    // Καθαρίζουμε τα πεδία
+                    titleInput.value = '';
+                    authorInput.value = '';
+                    yearInput.value = '';
+                    
+                    // Κάνουμε αυτόματη ανανέωση της σελίδας για να φανεί στη λίστα!
+                    location.reload(); 
+                } else {
+                    alert('Σφάλμα: ' + data.message);
+                }
+            } catch (error) {
+                alert('Σφάλμα επικοινωνίας με τον Σερβιτόρο.');
+            }
+        }
+
+        // Όταν ανοίγει η σελίδα, φορτώνουμε τα δεδομένα αυτόματα
+        window.onload = loadData;
+    </script>
+</body>
+</html>
