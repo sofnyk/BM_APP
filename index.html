@@ -167,15 +167,26 @@
                     card.className = 'book-card';
                     
                     const buttons = book.pdf_urls.map(url => {
-                        // Καθαρίζει το όνομα από το .pdf και αντικαθιστά τις κάτω παύλες με κενά
-                        let fileName = decodeURIComponent(url.split('/').pop())
-                                        .replace(/\.pdf$/i, '')
-                                        .replace(/_/g, ' '); 
+                        // Πρώτα παίρνουμε το αρχικό όνομα
+                        let rawFileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
                         
-                        // Αν έχει ΠΑΝΩ ΑΠΟ 1 αρχείο (δηλαδή 2 ή περισσότερα), δείχνει το όνομα!
-                        let label = book.pdf_urls.length > 1 ? `📖 ${fileName}` : "📖 Άνοιγμα";
+                        // Ελέγχουμε αν υπάρχει το 'bkm' στο όνομα
+                        const hasBookmarks = rawFileName.toLowerCase().includes('bkm');
+                        const bkmBadge = hasBookmarks ? ' 🔖' : '';
+                        const tooltip = hasBookmarks ? 'Διαθέτει σελιδοδείκτες (Bookmarks)' : 'Άνοιγμα PDF';
                         
-                        return `<a href="${url}" target="_blank" class="pdf-btn">${label}</a>`;
+                        // Καθαρίζουμε το όνομα από το bkm και τα underscores
+                        let cleanName = rawFileName
+                                        .replace(/-bkm/i, '')
+                                        .replace(/_bkm/i, '')
+                                        .replace(/ bkm/i, '')
+                                        .replace(/bkm/i, '')
+                                        .replace(/_/g, ' ')
+                                        .trim();
+                        
+                        let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
+                        
+                        return `<a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>`;
                     }).join('');
 
                     card.innerHTML = `
