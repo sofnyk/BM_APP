@@ -4,411 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ψηφιακό Αναλόγιο</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        :root { 
-            --primary: #2c3e50; 
-            --accent: #d35400; /* Πιο ζεστό χρώμα, ταιριάζει με βιβλία/αναλόγια */
-            --bg: #f4f7f6; 
-            --white: #ffffff;
-            --text: #333;
-            --success: #27ae60;
-            --danger: #e74c3c;
-        }
-
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background-color: var(--bg); 
-            color: var(--text);
-            line-height: 1.6;
-        }
-
-        /* HEADER & NAVIGATION */
-        header {
-            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
-            color: white;
-            padding: 50px 20px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: relative;
-        }
-
-        header h1 { 
-            margin: 0; 
-            font-size: 2.8em; 
-            letter-spacing: 1px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        header p { opacity: 0.8; font-size: 1.1em; margin-top: 10px; }
-
-        /* SEARCH BAR */
-        .search-container {
-            max-width: 700px;
-            margin: -35px auto 30px auto;
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
-        }
-
-        #searchInput {
-            width: 100%;
-            padding: 22px 30px;
-            font-size: 1.15em;
-            border: none;
-            border-radius: 50px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            outline: none;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-sizing: border-box;
-        }
-
-        #searchInput:focus {
-            transform: scale(1.02);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-        }
-
-        /* CONTROLS */
-        .view-controls {
-            max-width: 1200px;
-            margin: 0 auto 20px auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .view-btn {
-            background-color: var(--white);
-            border: 1px solid #ddd;
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #666;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .view-btn.active {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
-        }
-
-        .view-btn:hover:not(.active) {
-            background-color: #f0f0f0;
-        }
-
-        /* RESULTS GRID */
-        .results-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
-            transition: 0.3s;
-        }
-
-        /* BOOK CARD */
-        .book-card {
-            background: var(--white);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: 0.3s;
-            border: 1px solid rgba(0,0,0,0.03);
-        }
-
-        .book-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        .book-title {
-            font-size: 1.4em;
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: 12px;
-            line-height: 1.3;
-        }
-
-        .book-meta {
-            font-size: 0.95em;
-            color: #7f8c8d;
-            margin-bottom: 20px;
-        }
-
-        /* PDF BUTTONS */
-        .pdf-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: auto;
-        }
-
-        .pdf-btn {
-            background-color: var(--accent);
-            color: white;
-            text-decoration: none;
-            padding: 14px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            text-align: center;
-            flex: 1;
-            transition: 0.3s;
-            box-shadow: 0 4px 10px rgba(211, 84, 0, 0.2);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .pdf-btn:hover {
-            background-color: #b34700;
-            box-shadow: 0 6px 15px rgba(211, 84, 0, 0.4);
-            transform: translateY(-2px);
-        }
-
-        /* LIST VIEW SPECIFIC */
-        .results-container.list-view {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .results-container.list-view .book-card {
-            flex-direction: row;
-            align-items: center;
-            padding: 15px 30px;
-        }
-
-        .results-container.list-view .pdf-buttons {
-            margin-top: 0;
-            margin-left: 20px;
-            min-width: 150px;
-        }
-
-        /* AUTH BUTTON */
-        .nav-auth-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 50px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: white;
-        }
-
+        :root { --primary: #2c3e50; --accent: #d35400; --bg: #f4f7f6; --white: #ffffff; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: #333; }
+        header { background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); color: white; padding: 50px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; }
+        h1 { margin: 0; font-size: 2.8em; letter-spacing: 1px; }
+        .search-container { max-width: 700px; margin: -35px auto 30px auto; padding: 0 20px; position: relative; z-index: 10; }
+        #searchInput { width: 100%; padding: 22px 30px; font-size: 1.15em; border: none; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); outline: none; box-sizing: border-box; }
+        .view-controls { max-width: 1200px; margin: 0 auto 20px auto; padding: 0 20px; display: flex; justify-content: flex-end; gap: 12px; }
+        .view-btn { background-color: var(--white); border: 1px solid #ddd; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; color: #666; transition: 0.3s; }
+        .view-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .book-card { background: var(--white); border-radius: 20px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; border: 1px solid rgba(0,0,0,0.03); }
+        .book-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .book-title { font-size: 1.4em; color: var(--primary); font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+        .pdf-btn { background-color: var(--accent); color: white; text-decoration: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; text-align: center; flex: 1; transition: 0.3s; }
+        .pdf-btn:hover { background-color: #b34700; transform: translateY(-2px); }
+        .nav-auth-btn { position: absolute; top: 20px; right: 20px; padding: 12px 24px; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; transition: 0.3s; color: white; }
         .login-btn { background-color: var(--success); }
-        .login-btn:hover { background-color: #219150; transform: scale(1.05); }
-        
         .logout-btn { background-color: var(--danger); }
-        .logout-btn:hover { background-color: #c0392b; transform: scale(1.05); }
-
-        /* LOGIN MODAL */
-        #login-modal {
-            backdrop-filter: blur(8px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 25px;
-            text-align: center;
-            width: 340px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 1.1em;
-            transition: 0.3s;
-        }
-
-        .submit-btn:hover { background: #1a252f; }
-
-        .no-results {
-            text-align: center;
-            grid-column: 1 / -1;
-            padding: 60px;
-            color: #95a5a6;
-            font-size: 1.2em;
-        }
-
-        @media (max-width: 768px) {
-            header h1 { font-size: 2em; }
-            .results-container.list-view .book-card { flex-direction: column; text-align: center; }
-            .results-container.list-view .pdf-buttons { margin-left: 0; margin-top: 15px; width: 100%; }
-        }
+        
+        /* Modal Styles */
+        .modal-content { background: white; padding: 40px; border-radius: 25px; text-align: center; width: 340px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+        .auth-tab { flex: 1; padding: 10px; cursor: pointer; font-weight: bold; color: #95a5a6; }
+        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .modal-content input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1.1em; }
     </style>
 </head>
 <body>
-
-    <header id="main-header">
+    <header>
         <h1>Ψηφιακό Αναλόγιο</h1>
         <p>Βιβλιοθήκη Βυζαντινής Μουσικής</p>
     </header>
-
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση τίτλου ή δημιουργού..." oninput="searchBooks()">
-    </div>
-
+    <div class="search-container"><input type="text" id="searchInput" placeholder="🔍 Αναζήτηση..." oninput="searchBooks()"></div>
     <div class="view-controls">
         <button id="gridBtn" class="view-btn active" onclick="setView('grid')">🔲 Πλέγμα</button>
         <button id="listBtn" class="view-btn" onclick="setView('list')">📄 Λίστα</button>
     </div>
-
-    <div class="results-container" id="results">
-        </div>
+    <div class="results-container" id="results"></div>
 
     <script>
-        // Ρυθμίσεις Supabase
         if (typeof window.supabaseClient === 'undefined') {
             const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         }
-
         let isLoggedIn = false;
+        let currentMode = 'login';
 
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
-            
             const authDiv = document.createElement('div');
-            if (isLoggedIn) {
-                authDiv.innerHTML = '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>';
-            } else {
-                authDiv.innerHTML = '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος</button>';
-            }
+            authDiv.innerHTML = isLoggedIn ? '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>' : '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>';
             document.body.appendChild(authDiv);
 
             const modal = document.createElement('div');
-            modal.id = "login-modal";
-            modal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;";
+            modal.id = "auth-modal";
+            modal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
             modal.innerHTML = `
                 <div class="modal-content">
-                    <h3 style="margin-bottom: 20px; color: var(--primary);">Είσοδος Μελών</h3>
-                    <input type="email" id="l-email" placeholder="Email">
-                    <input type="password" id="l-pass" placeholder="Κωδικός">
-                    <button onclick="tryLogin()" class="submit-btn">Σύνδεση</button>
+                    <div class="auth-tabs">
+                        <div id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">Σύνδεση</div>
+                        <div id="tab-register" class="auth-tab" onclick="setAuthMode('register')">Εγγραφή</div>
+                    </div>
+                    <input type="email" id="a-email" placeholder="Email">
+                    <input type="password" id="a-password" placeholder="Κωδικός">
+                    <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Είσοδος</button>
+                    <p id="a-msg" style="margin-top: 15px; font-weight:bold; display:none;"></p>
                     <button onclick="hideLogin()" style="background:none; border:none; color:#7f8c8d; margin-top:15px; cursor:pointer;">Ακύρωση</button>
-                    <p id="l-error" style="color: var(--danger); display: none; margin-top: 15px; font-weight:bold;">Λάθος στοιχεία!</p>
                 </div>`;
             document.body.appendChild(modal);
         }
+
+        window.setAuthMode = (mode) => {
+            currentMode = mode;
+            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+            document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Δημιουργία Λογαριασμού';
+            document.getElementById('a-msg').style.display = 'none';
+        };
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('a-email').value;
+            const password = document.getElementById('a-password').value;
+            const msgEl = document.getElementById('a-msg');
+            msgEl.style.display = 'block';
+            msgEl.style.color = 'var(--primary)';
+            msgEl.innerText = "Παρακαλώ περιμένετε...";
+
+            if (currentMode === 'login') {
+                const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) { msgEl.innerText = "Λάθος email ή κωδικός!"; msgEl.style.color = 'var(--danger)'; }
+                else location.reload();
+            } else {
+                const { error } = await window.supabaseClient.auth.signUp({ email, password });
+                if (error) { msgEl.innerText = error.message; msgEl.style.color = 'var(--danger)'; }
+                else { msgEl.innerText = "Επιτυχία! Ελέγξτε το email σας για επιβεβαίωση."; msgEl.style.color = 'var(--success)'; }
+            }
+        };
+
+        window.showLogin = () => document.getElementById('auth-modal').style.display = 'flex';
+        window.hideLogin = () => document.getElementById('auth-modal').style.display = 'none';
+        window.doLogout = async () => { await window.supabaseClient.auth.signOut(); location.reload(); };
 
         async function searchBooks() {
             const query = document.getElementById('searchInput').value;
             const container = document.getElementById('results');
             try {
-                const baseUrl = window.location.origin;
-                const response = await fetch(`${baseUrl}/search?q=${encodeURIComponent(query)}&free_only=${!isLoggedIn}`);
+                const response = await fetch(`${window.location.origin}/search?q=${encodeURIComponent(query)}&free_only=${!isLoggedIn}`);
                 const data = await response.json();
-                
                 container.innerHTML = '';
-                
-                if (!data.data || data.data.length === 0) {
-                    container.innerHTML = '<div class="no-results">📭 Δεν βρέθηκαν βιβλία. Δοκιμάστε άλλη αναζήτηση ή συνδεθείτε.</div>';
-                    return;
-                }
-
+                if (!data.data || data.data.length === 0) { container.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία.</div>'; return; }
                 data.data.forEach(book => {
                     const card = document.createElement('div');
                     card.className = 'book-card';
-                    const buttons = book.pdf_urls.map(url => `<a href="${url}" target="_blank" class="pdf-btn">📖 Άνοιγμα</a>`).join('');
-                    card.innerHTML = `
-                        <div>
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-meta">👤 ${book.author_publisher || 'Άγνωστος'}</div>
-                        </div>
-                        <div class="pdf-buttons">${buttons}</div>
-                    `;
+                    card.innerHTML = `<div><div class="book-title">${book.title}</div><div style="color:#7f8c8d">👤 ${book.author_publisher || 'Άγνωστος'}</div></div>
+                        <div class="pdf-buttons">${book.pdf_urls.map(url => `<a href="${url}" target="_blank" class="pdf-btn">📖 Άνοιγμα</a>`).join('')}</div>`;
                     container.appendChild(card);
                 });
-            } catch (e) { 
-                console.error("Fetch Error:", e);
-                container.innerHTML = '<div class="no-results" style="color:var(--danger)">⚠️ Πρόβλημα σύνδεσης με τον διακομιστή.</div>';
-            }
+            } catch (e) { console.error(e); }
         }
 
-        window.setView = function(viewType) {
-            const container = document.getElementById('results');
-            const gridBtn = document.getElementById('gridBtn');
-            const listBtn = document.getElementById('listBtn');
-            
-            if (viewType === 'list') {
-                container.classList.add('list-view');
-                listBtn.classList.add('active'); 
-                gridBtn.classList.remove('active');
-            } else {
-                container.classList.remove('list-view');
-                gridBtn.classList.add('active'); 
-                listBtn.classList.remove('active');
-            }
-            localStorage.setItem('bm_view_pref', viewType);
-        };
-
-        window.showLogin = () => document.getElementById('login-modal').style.display = 'flex';
-        window.hideLogin = () => document.getElementById('login-modal').style.display = 'none';
-        
-        window.tryLogin = async () => {
-            const email = document.getElementById('l-email').value;
-            const password = document.getElementById('l-pass').value;
-            const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) document.getElementById('l-error').style.display = 'block'; 
-            else location.reload();
-        };
-
-        window.doLogout = async () => { 
-            await window.supabaseClient.auth.signOut(); 
-            location.reload(); 
+        window.setView = (v) => {
+            const c = document.getElementById('results');
+            v === 'list' ? c.classList.add('list-view') : c.classList.remove('list-view');
+            document.getElementById('gridBtn').classList.toggle('active', v === 'grid');
+            document.getElementById('listBtn').classList.toggle('active', v === 'list');
+            localStorage.setItem('bm_view_pref', v);
         };
 
         window.onload = async () => {
-            try {
-                const savedView = localStorage.getItem('bm_view_pref') || 'grid';
-                window.setView(savedView);
-                await setupAuth();
-                await searchBooks();
-            } catch (e) { console.error("Init Error:", e); }
+            window.setView(localStorage.getItem('bm_view_pref') || 'grid');
+            await setupAuth();
+            searchBooks();
         };
     </script>
 </body>
