@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ψηφιακό Αναλόγιο</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         :root {
             --primary: #2c3e50;
@@ -23,6 +26,7 @@
             padding: 30px 20px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative; /* Βοηθάει να τοποθετήσουμε το κουμπί σωστά */
         }
         h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
         
@@ -190,7 +194,69 @@
         </div>
 
     <script>
-        // Λειτουργία αλλαγής προβολής (και αποθήκευση στη μνήμη του browser)
+        // 2. ΡΥΘΜΙΣΕΙΣ SUPABASE & ΠΟΡΤΙΕΡΗ
+        const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
+        // 🚨 ΒΑΛΕ ΕΔΩ ΤΟ ΚΛΕΙΔΙ ΣΟΥ (ΑΝΑΜΕΣΑ ΣΤΑ ΑΥΤΑΚΙΑ):
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8'; 
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let isLoggedIn = false;
+
+        // Συνάρτηση που στήνει το σύστημα σύνδεσης
+        async function setupAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            isLoggedIn = !!session;
+
+            // Φτιάχνουμε το κουμπί Πάνω Δεξιά
+            const authDiv = document.createElement('div');
+            authDiv.style.cssText = "position: absolute; top: 15px; right: 15px; z-index: 9999;";
+            
+            if (isLoggedIn) {
+                authDiv.innerHTML = '<button onclick="doLogout()" style="padding: 10px 15px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚪 Έξοδος</button>';
+            } else {
+                authDiv.innerHTML = '<button onclick="showLogin()" style="padding: 10px 15px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🔑 Είσοδος / Εγγραφή</button>';
+            }
+            document.body.appendChild(authDiv);
+
+            // Φτιάχνουμε το παραθυράκι του Login (κρυφό στην αρχή)
+            const loginModal = document.createElement('div');
+            loginModal.id = "login-modal";
+            loginModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;";
+            loginModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 300px; font-family: sans-serif;">
+                    <h2 style="margin-top:0; color: #2c3e50;">Είσοδος Μελών</h2>
+                    <p style="font-size: 0.9em; color: #7f8c8d; margin-bottom: 20px;">Συνδεθείτε για πλήρη πρόσβαση.</p>
+                    <input type="email" id="l-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;">
+                    <input type="password" id="l-pass" placeholder="Κωδικός" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px;">
+                    <button onclick="tryLogin()" style="width: 100%; padding: 10px; background: #2980b9; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 10px; font-size: 16px;">Σύνδεση</button>
+                    <button onclick="hideLogin()" style="width: 100%; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Ακύρωση</button>
+                    <p id="l-error" style="color: red; margin-top: 10px; display: none; font-weight: bold;">Λάθος στοιχεία!</p>
+                </div>
+            `;
+            document.body.appendChild(loginModal);
+        }
+
+        function showLogin() { document.getElementById('login-modal').style.display = 'flex'; }
+        function hideLogin() { document.getElementById('login-modal').style.display = 'none'; }
+
+        async function tryLogin() {
+            const email = document.getElementById('l-email').value;
+            const password = document.getElementById('l-pass').value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                document.getElementById('l-error').style.display = 'block';
+            } else {
+                location.reload(); // Ανανέωση σελίδας αν μπει σωστά
+            }
+        }
+
+        async function doLogout() {
+            await supabase.auth.signOut();
+            location.reload(); // Ανανέωση σελίδας αν βγει
+        }
+
+
+        // 3. ΛΕΙΤΟΥΡΓΙΕΣ ΣΕΛΙΔΑΣ (Προβολή και Αναζήτηση)
         function setView(viewType) {
             const container = document.getElementById('results');
             const gridBtn = document.getElementById('gridBtn');
@@ -200,36 +266,40 @@
                 container.classList.add('list-view');
                 listBtn.classList.add('active');
                 gridBtn.classList.remove('active');
-                localStorage.setItem('bm_view_pref', 'list'); // Αποθήκευση
+                localStorage.setItem('bm_view_pref', 'list');
             } else {
                 container.classList.remove('list-view');
                 gridBtn.classList.add('active');
                 listBtn.classList.remove('active');
-                localStorage.setItem('bm_view_pref', 'grid'); // Αποθήκευση
+                localStorage.setItem('bm_view_pref', 'grid');
             }
         }
 
-        // Φόρτωση της σελίδας: Διάβασμα μνήμης και αναζήτηση βιβλίων
-        window.onload = () => {
+        // Φόρτωση της σελίδας: ΠΡΩΤΑ ρωτάμε τον πορτιέρη, ΜΕΤΑ φέρνουμε τα βιβλία!
+        window.onload = async () => {
             const savedView = localStorage.getItem('bm_view_pref') || 'grid';
             setView(savedView);
-            searchBooks();
+            
+            await setupAuth(); // Περιμένουμε να ελέγξει αν είναι συνδεδεμένος
+            searchBooks();     // Τώρα κάνουμε αναζήτηση με τα σωστά δικαιώματα!
         };
 
-        // Η συνάρτηση που φέρνει τα δεδομένα από το API
         async function searchBooks() {
             const query = document.getElementById('searchInput').value;
             const resultsContainer = document.getElementById('results');
             
             try {
-                // Χτυπάμε τον Σερβιτόρο μας
-                const response = await fetch('/search?q=' + encodeURIComponent(query));
+                // Η ΜΑΓΕΙΑ: Αν ΔΕΝ είναι συνδεδεμένος, ζητάμε μόνο τα δωρεάν (free_only=true)
+                const isFreeOnly = !isLoggedIn;
+                const endpoint = '/search?q=' + encodeURIComponent(query) + '&free_only=' + isFreeOnly;
+                
+                const response = await fetch(endpoint);
                 const data = await response.json();
                 
                 resultsContainer.innerHTML = ''; 
 
                 if (data.status !== 'success' || data.data.length === 0) {
-                    resultsContainer.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία με αυτούς τους όρους.</div>';
+                    resultsContainer.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία. Μήπως πρέπει να συνδεθείτε;</div>';
                     return;
                 }
 
@@ -239,26 +309,20 @@
                     
                     let buttonsHtml = '';
                     book.pdf_urls.forEach((url, index) => {
-                        // 1. Παίρνουμε το όνομα του αρχείου από το τέλος του link και το "αποκωδικοποιούμε" (για τα Ελληνικά)
                         let fileName = decodeURIComponent(url.split('/').pop());
-                        
-                        // 2. Ελέγχουμε αν έχει bkm (Σελιδοδείκτες)
                         const hasBookmarks = fileName.toLowerCase().includes('bkm');
                         const bkmBadge = hasBookmarks ? ' 🔖' : '';
                         
-                        // 3. "Καθαρίζουμε" το όνομα (βγάζουμε το .pdf και το bkm για να γίνει ωραία ταμπέλα)
                         let cleanName = fileName.replace(/\.pdf$/i, '')
                                                 .replace(/-bkm/i, '')
                                                 .replace(/_bkm/i, '')
                                                 .replace(/bkm/i, '')
                                                 .trim();
                         
-                        // 4. Αν το βιβλίο έχει 1 αρχείο, γράφει απλά "Άνοιγμα PDF". Αν έχει 2+, γράφει το όνομα!
                         const btnText = book.pdf_urls.length > 1 
                             ? `📖 ${cleanName}${bkmBadge}` 
                             : `📖 Άνοιγμα PDF${bkmBadge} ${hasBookmarks ? '(Με Σελιδοδείκτες)' : ''}`;
                             
-                        // Το title βοηθάει ώστε αν αφήσεις το ποντίκι πάνω στο κουμπί, να σου δείξει ολόκληρο το όνομα
                         buttonsHtml += `<a href="${url}" target="_blank" class="pdf-btn" title="${cleanName}">${btnText}</a>`;
                     });
 
@@ -275,7 +339,7 @@
                     resultsContainer.appendChild(card);
                 });
             } catch (error) {
-                resultsContainer.innerHTML = '<div class="no-results" style="color: red;">Σφάλμα: Ο Σερβιτόρος (μαύρο παράθυρο) δεν απαντά!</div>';
+                resultsContainer.innerHTML = '<div class="no-results" style="color: red;">Σφάλμα σύνδεσης.</div>';
             }
         }
     </script>
