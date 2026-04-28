@@ -138,7 +138,6 @@
         .input-group input:focus { border-color: var(--accent); background: white; outline: none; box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1); }
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.2em; }
 
-        /* ======== ΝΕΟ: PASSWORD CONSTRAINTS ======== */
         .pwd-rules {
             display: none; flex-direction: column; gap: 6px; text-align: left;
             font-size: 0.85em; margin-top: -5px; margin-bottom: 15px; padding-left: 5px;
@@ -220,14 +219,12 @@
         let isLoggedIn = false;
         let currentMode = 'login';
         
-        // ======== ΝΕΟ: TIMEOUT INACTIVITY ========
+        // TIMEOUT INACTIVITY
         let inactivityTimer;
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
-            // Ξεκινάει τον χρόνο ΜΟΝΟ αν ο χρήστης είναι συνδεδεμένος
             if (isLoggedIn) {
-                // 30 λεπτά * 60 δευτερόλεπτα * 1000 χιλιοστά = 1800000 ms
                 inactivityTimer = setTimeout(() => {
                     alert("⏳ Η συνεδρία σας έληξε λόγω αδράνειας. Παρακαλώ συνδεθείτε ξανά.");
                     window.doLogout();
@@ -235,11 +232,9 @@
             }
         }
 
-        // Ανιχνεύει κινήσεις για να μηδενίζει τον χρόνο
         ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
             window.addEventListener(evt, resetInactivityTimer);
         });
-        // =========================================
 
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
@@ -248,7 +243,7 @@
             authDiv.innerHTML = isLoggedIn ? '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>' : '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>';
             document.body.appendChild(authDiv);
             
-            resetInactivityTimer(); // Ξεκινάει το ρολόι αν μόλις μπήκε
+            resetInactivityTimer();
         }
 
         async function searchBooks() {
@@ -303,40 +298,42 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
+        // Μηδενισμός και άνοιγμα
         window.showLogin = () => {
             document.getElementById('auth-modal').style.display = 'flex';
-            document.getElementById('a-msg').style.display = 'none'; 
-            document.getElementById('a-password').value = ''; // Καθαρίζει τον κωδικό
-            checkPassword(); // Επαναφέρει τα χρώματα
+            document.getElementById('a-email').value = '';
+            document.getElementById('a-password').value = '';
+            document.getElementById('a-msg').style.display = 'none';
+            setAuthMode('login'); // Πάντα ξεκινάει από την καρτέλα Σύνδεσης
         };
         
         window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
 
-        // ======== ΝΕΟ: ΕΛΕΓΧΟΣ ΚΩΔΙΚΟΥ ΖΩΝΤΑΝΑ ========
         window.checkPassword = () => {
-            if (currentMode !== 'register') return; // Ελέγχει μόνο στην εγγραφή
+            if (currentMode !== 'register') return; 
             
             const val = document.getElementById('a-password').value;
             const lenObj = document.getElementById('rule-len');
             const upObj = document.getElementById('rule-up');
             const numObj = document.getElementById('rule-num');
 
-            // Τουλάχιστον 6 χαρακτήρες
             val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
-            // Ένα κεφαλαίο (Ελληνικό ή Λατινικό)
             /[A-ZΑ-Ω]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
-            // Ένας αριθμός
             /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
         };
 
         window.setAuthMode = (mode) => {
             currentMode = mode;
+            
+            // Καθαρισμός πεδίων κατά την αλλαγή tab
+            document.getElementById('a-email').value = '';
+            document.getElementById('a-password').value = '';
+            
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
             document.getElementById('tab-register').classList.toggle('active', mode === 'register');
             document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
             document.getElementById('a-msg').style.display = 'none';
             
-            // Εμφανίζει τους κανόνες μόνο στην καρτέλα Εγγραφής
             document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none';
             checkPassword();
         };
@@ -358,7 +355,6 @@
                 return;
             }
 
-            // Έξτρα έλεγχος εγκυρότητας πριν την εγγραφή
             if (currentMode === 'register') {
                 if (password.length < 6 || !/[A-ZΑ-Ω]/.test(password) || !/[0-9]/.test(password)) {
                     showMsg("Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error");
@@ -380,8 +376,10 @@
                 if (error) {
                     showMsg(error.message, "error");
                 } else {
-                    showMsg("Επιτυχία! Μπορείτε πλέον να συνδεθείτε.", "success");
-                    setTimeout(() => setAuthMode('login'), 2000); // Τον πάει στο login μετά από 2 δευτ.
+                    showMsg("Επιτυχία! Συνδέεστε...", "success");
+                    // Αφού η επιβεβαίωση email είναι κλειστή, το Supabase μας έκανε ήδη login.
+                    // Απλά κάνουμε reload για να ανανεωθεί η σελίδα!
+                    setTimeout(() => location.reload(), 1000);
                 }
             }
         };
