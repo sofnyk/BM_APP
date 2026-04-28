@@ -37,16 +37,25 @@ def serve_home():
     return FileResponse("index.html")
 
 @app.get("/search")
-def search_books(q: str = ""):
+def search_books(q: str = "", free_only: bool = False):
     try:
         conn = psycopg2.connect(DB_URL)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Το βασικό μας ερώτημα
         query = """
             SELECT * FROM books 
             WHERE (title ILIKE %s OR author_publisher ILIKE %s)
             AND file_key IS NOT NULL
-            ORDER BY title ASC;
         """
+        
+        # Αν κάποιος δεν είναι συνδεδεμένος, του δείχνουμε ΜΟΝΟ τα δωρεάν!
+        if free_only:
+            query += " AND is_free = TRUE"
+            
+        # Βάζουμε την ταξινόμηση στο τέλος
+        query += " ORDER BY title ASC;"
+        
         search_val = f"%{q}%"
         cursor.execute(query, (search_val, search_val))
         books = cursor.fetchall()
