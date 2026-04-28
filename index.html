@@ -10,7 +10,7 @@
     <style>
         :root { 
             --primary: #2c3e50; 
-            --accent: #27ae60; /* ΤΟ ΝΕΟ ΠΡΑΣΙΝΟ */
+            --accent: #27ae60; 
             --bg: #f4f7f6; 
             --white: #ffffff;
             --success: #2ecc71;
@@ -83,19 +83,38 @@
 
         .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 
-        /* ΤΟ ΔΙΟΡΘΩΜΕΝΟ ΠΡΑΣΙΝΟ ΚΟΥΜΠΙ */
+        /* Γκρουπ κουμπιών για να είναι κολλητά το Άνοιγμα και η Λήψη */
+        .pdf-btn-group {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+            min-width: 150px;
+        }
+
         .pdf-btn {
             background-color: var(--accent); color: white; text-decoration: none;
-            padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
+            padding: 12px 15px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
             flex: 1; text-align: center; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
-            box-shadow: 0 4px 0 #1e8449; /* Σκουρόχρωμη πράσινη σκιά για βάθος */
+            box-shadow: 0 4px 0 #1e8449;
         }
 
         .pdf-btn:hover { 
             background-color: #2ecc71; 
             transform: translateY(2px); 
             box-shadow: 0 2px 0 #1e8449; 
+        }
+
+        /* Το νέο κουμπάκι Λήψης (Σκούρο Μπλε) */
+        .pdf-btn.download-btn {
+            flex: 0 0 auto; /* Δεν πιάνει όλο τον χώρο, πιάνει μόνο όσο χρειάζεται το βελάκι */
+            background-color: var(--primary);
+            box-shadow: 0 4px 0 #1a252f;
+        }
+        
+        .pdf-btn.download-btn:hover {
+            background-color: #34495e;
+            box-shadow: 0 2px 0 #1a252f;
         }
 
         .nav-auth-btn {
@@ -118,7 +137,7 @@
 
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
-        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
+        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 250px; }
     </style>
 </head>
 <body>
@@ -190,7 +209,15 @@
                         
                         let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
                         
-                        return `<a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>`;
+                        // Το μαγικό link για απευθείας κατέβασμα
+                        let downloadUrl = url + '?download=';
+                        
+                        return `
+                            <div class="pdf-btn-group">
+                                <a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>
+                                <a href="${downloadUrl}" class="pdf-btn download-btn" title="Απευθείας Λήψη (Download)" download>⬇️</a>
+                            </div>
+                        `;
                     }).join('');
 
                     card.innerHTML = `
