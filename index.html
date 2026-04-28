@@ -200,8 +200,9 @@
             
             <div id="pwd-constraints" class="pwd-rules">
                 <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
-                <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
+                <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (Μόνο A-Z)</div>
                 <div id="rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
+                <div id="rule-eng" class="pwd-rule">Μόνο Αγγλικά (Όχι κενά & Ελληνικά)</div>
             </div>
 
             <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
@@ -298,13 +299,12 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
-        // Μηδενισμός και άνοιγμα
         window.showLogin = () => {
             document.getElementById('auth-modal').style.display = 'flex';
             document.getElementById('a-email').value = '';
             document.getElementById('a-password').value = '';
             document.getElementById('a-msg').style.display = 'none';
-            setAuthMode('login'); // Πάντα ξεκινάει από την καρτέλα Σύνδεσης
+            setAuthMode('login'); 
         };
         
         window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
@@ -316,16 +316,26 @@
             const lenObj = document.getElementById('rule-len');
             const upObj = document.getElementById('rule-up');
             const numObj = document.getElementById('rule-num');
+            const engObj = document.getElementById('rule-eng');
 
             val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
-            /[A-ZΑ-Ω]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            
+            // Τσεκάρει μόνο αγγλικό κεφαλαίο
+            /[A-Z]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            
             /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
+            
+            // Το Regex ^[\x21-\x7E]+$ σημαίνει: ΜΟΝΟ Αγγλικοί χαρακτήρες και σύμβολα, ΧΩΡΙΣ κενά, ΧΩΡΙΣ Ελληνικά
+            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) {
+                engObj.classList.add('valid');
+            } else {
+                engObj.classList.remove('valid');
+            }
         };
 
         window.setAuthMode = (mode) => {
             currentMode = mode;
             
-            // Καθαρισμός πεδίων κατά την αλλαγή tab
             document.getElementById('a-email').value = '';
             document.getElementById('a-password').value = '';
             
@@ -356,7 +366,8 @@
             }
 
             if (currentMode === 'register') {
-                if (password.length < 6 || !/[A-ZΑ-Ω]/.test(password) || !/[0-9]/.test(password)) {
+                const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
+                if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) {
                     showMsg("Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error");
                     return;
                 }
@@ -377,8 +388,6 @@
                     showMsg(error.message, "error");
                 } else {
                     showMsg("Επιτυχία! Συνδέεστε...", "success");
-                    // Αφού η επιβεβαίωση email είναι κλειστή, το Supabase μας έκανε ήδη login.
-                    // Απλά κάνουμε reload για να ανανεωθεί η σελίδα!
                     setTimeout(() => location.reload(), 1000);
                 }
             }
