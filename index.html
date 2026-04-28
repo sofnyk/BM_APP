@@ -6,33 +6,84 @@
     <title>Ψηφιακό Αναλόγιο</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #d35400; --bg: #f4f7f6; --white: #ffffff; --success: #27ae60; --danger: #e74c3c; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: #333; }
-        header { background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); color: white; padding: 50px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative; }
-        h1 { margin: 0; font-size: 2.8em; letter-spacing: 1px; }
-        .search-container { max-width: 700px; margin: -35px auto 30px auto; padding: 0 20px; position: relative; z-index: 10; }
-        #searchInput { width: 100%; padding: 22px 30px; font-size: 1.15em; border: none; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); outline: none; box-sizing: border-box; }
-        .view-controls { max-width: 1200px; margin: 0 auto 20px auto; padding: 0 20px; display: flex; justify-content: flex-end; gap: 12px; }
-        .view-btn { background-color: var(--white); border: 1px solid #ddd; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; color: #666; transition: 0.3s; }
-        .view-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
-        .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
-        .book-card { background: var(--white); border-radius: 20px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; border: 1px solid rgba(0,0,0,0.03); }
-        .book-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .book-title { font-size: 1.4em; color: var(--primary); font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
-        .pdf-btn { background-color: var(--accent); color: white; text-decoration: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; text-align: center; flex: 1; transition: 0.3s; }
-        .pdf-btn:hover { background-color: #b34700; transform: translateY(-2px); }
-        .nav-auth-btn { position: absolute; top: 20px; right: 20px; padding: 12px 24px; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; transition: 0.3s; color: white; }
-        .login-btn { background-color: var(--success); }
-        .logout-btn { background-color: var(--danger); }
-        
-        /* Modal Styles */
-        .modal-content { background: white; padding: 40px; border-radius: 25px; text-align: center; width: 340px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
-        .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-        .auth-tab { flex: 1; padding: 10px; cursor: pointer; font-weight: bold; color: #95a5a6; }
-        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
-        .modal-content input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
-        .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1.1em; }
-    </style>
+    :root { 
+        --primary: #2c3e50; 
+        --accent: #d35400; 
+        --bg: #f0f2f5; 
+        --white: #ffffff;
+        --success: #27ae60;
+        --danger: #e74c3c;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background-color: var(--bg); color: #333; }
+
+    /* HEADER */
+    header {
+        background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+        color: white; padding: 60px 20px; text-align: center; position: relative;
+    }
+    header h1 { margin: 0; font-size: 2.5em; font-weight: 800; letter-spacing: -1px; }
+
+    /* SEARCH */
+    .search-container { max-width: 650px; margin: -30px auto 30px auto; padding: 0 20px; }
+    #searchInput {
+        width: 100%; padding: 18px 25px; font-size: 1.1em; border: none; border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); outline: none; box-sizing: border-box;
+    }
+
+    /* CONTROLS (Πλέγμα/Λίστα) */
+    .view-controls { max-width: 1200px; margin: 0 auto 20px auto; padding: 0 20px; display: flex; justify-content: flex-end; gap: 8px; }
+    .view-btn { 
+        background: #fff; border: 1px solid #ddd; padding: 8px 16px; border-radius: 8px; 
+        cursor: pointer; font-weight: 600; color: #555; transition: 0.2s;
+    }
+    .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* CARDS */
+    .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+    .book-card { 
+        background: var(--white); border-radius: 18px; padding: 25px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s;
+    }
+    .book-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+    .book-title { font-size: 1.25em; color: var(--primary); font-weight: 700; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .book-meta { font-size: 0.9em; color: #7f8c8d; margin-bottom: 20px; }
+
+    /* PDF BUTTONS - ΤΟ ΔΙΟΡΘΩΜΕΝΟ ΚΟΜΜΑΤΙ */
+    .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+    .pdf-btn {
+        background-color: var(--accent); color: white; text-decoration: none; 
+        padding: 12px 15px; border-radius: 10px; font-weight: 700; font-size: 0.95em;
+        flex: 1; text-align: center; display: flex; align-items: center; justify-content: center;
+        transition: 0.2s; box-shadow: 0 4px 0 #a04000; /* Flat σκιά για βάθος */
+    }
+    .pdf-btn:hover { background-color: #e67e22; transform: translateY(2px); box-shadow: 0 2px 0 #a04000; }
+    .pdf-btn::before { content: '📖'; margin-right: 8px; font-size: 1.1em; } /* Εικονίδιο */
+
+    /* LOGIN/AUTH BUTTON */
+    .nav-auth-btn {
+        position: absolute; top: 20px; right: 20px; padding: 10px 20px; border: none;
+        border-radius: 10px; font-weight: 700; cursor: pointer; color: white; transition: 0.2s;
+    }
+    .login-btn { background-color: var(--success); }
+    .login-btn:hover { background-color: #219150; }
+    .logout-btn { background-color: var(--danger); }
+
+    /* MODAL */
+    .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 320px; }
+    .modal-content input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+    /* LIST VIEW */
+    .results-container.list-view { display: flex; flex-direction: column; gap: 12px; }
+    .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 25px; }
+    .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: auto; width: 180px; }
+
+    @media (max-width: 600px) {
+        header h1 { font-size: 1.8em; }
+        .nav-auth-btn { position: static; margin: 10px auto; width: fit-content; }
+    }
+</style>
 </head>
 <body>
     <header>
@@ -123,7 +174,7 @@
                     const card = document.createElement('div');
                     card.className = 'book-card';
                     card.innerHTML = `<div><div class="book-title">${book.title}</div><div style="color:#7f8c8d">👤 ${book.author_publisher || 'Άγνωστος'}</div></div>
-                        <div class="pdf-buttons">${book.pdf_urls.map(url => `<a href="${url}" target="_blank" class="pdf-btn">📖 Άνοιγμα</a>`).join('')}</div>`;
+                        <div class="pdf-buttons">${book.pdf_urls.map(url => `<a href="${url}" target="_blank" class="pdf-btn">Άνοιγμα</a>`).join('')}</div>`;
                     container.appendChild(card);
                 });
             } catch (e) { console.error(e); }
