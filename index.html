@@ -90,7 +90,7 @@
             padding: 12px 15px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
             flex: 1; text-align: center; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
-            box-shadow: 0 4px 0 #1e8449;
+            box-shadow: 0 4px 0 #1e8449; border: none; cursor: pointer; font-family: inherit;
         }
 
         .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
@@ -164,6 +164,33 @@
             document.body.appendChild(authDiv);
         }
 
+        // --- Η ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΕΞΑΝΑΓΚΑΖΕΙ ΤΟ DOWNLOAD ---
+        window.forceDownload = async (url, filename) => {
+            try {
+                // Φέρνουμε το αρχείο στο παρασκήνιο
+                const response = await fetch(url);
+                const blob = await response.blob();
+                
+                // Δημιουργούμε ένα προσωρινό τοπικό link
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename; // Δίνουμε το όνομα του αρχείου
+                
+                // Πατάμε "εικονικά" το κουμπί
+                document.body.appendChild(a);
+                a.click();
+                
+                // Καθαρίζουμε τη μνήμη
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+            } catch (e) {
+                console.error("Σφάλμα κατά τη λήψη:", e);
+                alert("Σφάλμα! Δοκιμάστε να ανοίξετε το αρχείο και να το κατεβάσετε από εκεί.");
+            }
+        };
+
         async function searchBooks() {
             const query = document.getElementById('searchInput').value;
             const container = document.getElementById('results');
@@ -198,16 +225,11 @@
                         
                         let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
                         
-                        // Η ΜΑΓΕΙΑ ΓΙΑ ΤΟ DOWNLOAD:
-                        // 1. Ελέγχει αν το link έχει ήδη '?' για να βάλει '&' ή '?'
-                        // 2. Ζητάει από το Supabase να το στείλει ως 'attachment' με το σωστό όνομα
-                        let separator = url.includes('?') ? '&' : '?';
-                        let downloadUrl = url + separator + 'download=' + encodeURIComponent(cleanName + '.pdf');
-                        
+                        // ΚΑΛΟΥΜΕ ΤΗ ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΟ DOWNLOAD
                         return `
                             <div class="pdf-btn-group">
                                 <a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>
-                                <a href="${downloadUrl}" class="pdf-btn download-btn" title="Απευθείας Λήψη" download="${cleanName}.pdf">⬇️</a>
+                                <button onclick="forceDownload('${url}', '${cleanName}.pdf')" class="pdf-btn download-btn" title="Απευθείας Λήψη">⬇️</button>
                             </div>
                         `;
                     }).join('');
