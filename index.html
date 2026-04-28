@@ -26,7 +26,7 @@
             padding: 30px 20px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            position: relative; /* Βοηθάει να τοποθετήσουμε το κουμπί σωστά */
+            position: relative;
         }
         h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
         
@@ -52,7 +52,6 @@
             box-shadow: 0 5px 20px rgba(192, 57, 43, 0.2);
         }
 
-        /* Κουμπιά εναλλαγής προβολής */
         .view-controls {
             max-width: 1200px;
             margin: 0 auto 20px auto;
@@ -76,7 +75,6 @@
             color: white;
         }
 
-        /* Προεπιλεγμένη προβολή: ΠΛΕΓΜΑ (Grid) */
         .results-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -100,7 +98,6 @@
             box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         }
 
-        /* Προβολή: ΛΙΣΤΑ (List) */
         .results-container.list-view {
             display: flex;
             flex-direction: column;
@@ -111,19 +108,14 @@
             align-items: center;
             padding: 15px 25px;
         }
-        .results-container.list-view .book-info {
-            flex: 1; /* Πιάνει τον αριστερό χώρο */
-        }
-        .results-container.list-view .book-year {
-            margin-bottom: 0;
-        }
+        .results-container.list-view .book-info { flex: 1; }
+        .results-container.list-view .book-year { margin-bottom: 0; }
         .results-container.list-view .pdf-buttons {
             margin-top: 0;
             margin-left: 20px;
             flex-wrap: nowrap;
         }
 
-        /* Γενικά στυλ κάρτας */
         .book-title {
             font-size: 1.3em;
             color: var(--primary);
@@ -159,7 +151,6 @@
             padding: 50px;
         }
 
-        /* Κινητά / Μικρά Tablets */
         @media (max-width: 768px) {
             .results-container.list-view .book-card {
                 flex-direction: column;
@@ -191,23 +182,19 @@
     </div>
 
     <div class="results-container" id="results">
-        </div>
+    </div>
 
     <script>
-        // 2. ΡΥΘΜΙΣΕΙΣ SUPABASE & ΠΟΡΤΙΕΡΗ
         const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
-        // 🚨 ΒΑΛΕ ΕΔΩ ΤΟ ΚΛΕΙΔΙ ΣΟΥ (ΑΝΑΜΕΣΑ ΣΤΑ ΑΥΤΑΚΙΑ):
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8'; 
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let isLoggedIn = false;
 
-        // Συνάρτηση που στήνει το σύστημα σύνδεσης
         async function setupAuth() {
             const { data: { session } } = await supabase.auth.getSession();
             isLoggedIn = !!session;
 
-            // Φτιάχνουμε το κουμπί Πάνω Δεξιά
             const authDiv = document.createElement('div');
             authDiv.style.cssText = "position: absolute; top: 15px; right: 15px; z-index: 9999;";
             
@@ -218,7 +205,6 @@
             }
             document.body.appendChild(authDiv);
 
-            // Φτιάχνουμε το παραθυράκι του Login (κρυφό στην αρχή)
             const loginModal = document.createElement('div');
             loginModal.id = "login-modal";
             loginModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;";
@@ -246,17 +232,15 @@
             if (error) {
                 document.getElementById('l-error').style.display = 'block';
             } else {
-                location.reload(); // Ανανέωση σελίδας αν μπει σωστά
+                location.reload(); 
             }
         }
 
         async function doLogout() {
             await supabase.auth.signOut();
-            location.reload(); // Ανανέωση σελίδας αν βγει
+            location.reload(); 
         }
 
-
-        // 3. ΛΕΙΤΟΥΡΓΙΕΣ ΣΕΛΙΔΑΣ (Προβολή και Αναζήτηση)
         function setView(viewType) {
             const container = document.getElementById('results');
             const gridBtn = document.getElementById('gridBtn');
@@ -275,13 +259,12 @@
             }
         }
 
-        // Φόρτωση της σελίδας: ΠΡΩΤΑ ρωτάμε τον πορτιέρη, ΜΕΤΑ φέρνουμε τα βιβλία!
         window.onload = async () => {
             const savedView = localStorage.getItem('bm_view_pref') || 'grid';
             setView(savedView);
             
-            await setupAuth(); // Περιμένουμε να ελέγξει αν είναι συνδεδεμένος
-            searchBooks();     // Τώρα κάνουμε αναζήτηση με τα σωστά δικαιώματα!
+            await setupAuth(); 
+            searchBooks();     
         };
 
         async function searchBooks() {
@@ -289,7 +272,6 @@
             const resultsContainer = document.getElementById('results');
             
             try {
-                // Η ΜΑΓΕΙΑ: Αν ΔΕΝ είναι συνδεδεμένος, ζητάμε μόνο τα δωρεάν (free_only=true)
                 const isFreeOnly = !isLoggedIn;
                 const endpoint = '/search?q=' + encodeURIComponent(query) + '&free_only=' + isFreeOnly;
                 
