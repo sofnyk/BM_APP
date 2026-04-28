@@ -29,13 +29,12 @@
 
         header h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
 
-        /* ΔΙΟΡΘΩΣΗ 1: POSITION ΤΟΥ SEARCH BAR */
         .search-container {
             max-width: 700px;
-            margin: -30px auto 30px auto; /* Το ανέβασα λίγο πιο πάνω */
+            margin: -30px auto 30px auto;
             padding: 0 20px;
             position: relative;
-            z-index: 1000; /* Για να είναι πάντα πάνω από όλα */
+            z-index: 1000;
         }
 
         #searchInput {
@@ -79,7 +78,6 @@
 
         .book-title { font-size: 1.3em; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
 
-        /* ΔΙΟΡΘΩΣΗ 2: ΣΤΥΛ ΓΙΑ META DATA (Author & Year) */
         .book-meta { font-size: 0.95em; color: #7f8c8d; margin-bottom: 15px; }
         .book-meta div { margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 
@@ -94,7 +92,6 @@
 
         .pdf-btn:hover { background-color: #b34700; transform: translateY(-2px); }
 
-        /* AUTH BUTTONS */
         .nav-auth-btn {
             position: absolute; top: 20px; right: 20px;
             padding: 10px 20px; border: none; border-radius: 50px;
@@ -103,7 +100,6 @@
         .login-btn { background-color: var(--success); }
         .logout-btn { background-color: var(--danger); }
 
-        /* LOGIN MODAL */
         #auth-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;
@@ -113,7 +109,6 @@
         .modal-content input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
 
-        /* LIST VIEW */
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
@@ -138,7 +133,6 @@
     <div class="results-container" id="results"></div>
 
     <script>
-        // Supabase Setup
         if (typeof window.supabaseClient === 'undefined') {
             const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
@@ -172,13 +166,14 @@
                     const card = document.createElement('div');
                     card.className = 'book-card';
                     
-                    // ΔΙΟΡΘΩΣΗ 3: ΛΟΓΙΚΗ ΓΙΑ ΟΝΟΜΑΤΑ ΑΡΧΕΙΩΝ
                     const buttons = book.pdf_urls.map(url => {
-                        // Παίρνουμε το όνομα του αρχείου από το URL και βγάζουμε την κατάληξη .pdf
-                        let fileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
+                        // Καθαρίζει το όνομα από το .pdf και αντικαθιστά τις κάτω παύλες με κενά
+                        let fileName = decodeURIComponent(url.split('/').pop())
+                                        .replace(/\.pdf$/i, '')
+                                        .replace(/_/g, ' '); 
                         
-                        // Αν υπάρχουν πάνω από 2 αρχεία, δείχνουμε το όνομα. Αλλιώς δείχνουμε "Άνοιγμα".
-                        let label = book.pdf_urls.length > 2 ? `📖 ${fileName}` : "📖 Άνοιγμα";
+                        // Αν έχει ΠΑΝΩ ΑΠΟ 1 αρχείο (δηλαδή 2 ή περισσότερα), δείχνει το όνομα!
+                        let label = book.pdf_urls.length > 1 ? `📖 ${fileName}` : "📖 Άνοιγμα";
                         
                         return `<a href="${url}" target="_blank" class="pdf-btn">${label}</a>`;
                     }).join('');
@@ -198,7 +193,6 @@
             } catch (e) { console.error(e); }
         }
 
-        // View Functions
         window.setView = (v) => {
             const c = document.getElementById('results');
             v === 'list' ? c.classList.add('list-view') : c.classList.remove('list-view');
