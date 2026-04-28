@@ -10,10 +10,10 @@
     <style>
         :root { 
             --primary: #2c3e50; 
-            --accent: #d35400; 
+            --accent: #27ae60; /* ΤΟ ΝΕΟ ΠΡΑΣΙΝΟ */
             --bg: #f4f7f6; 
             --white: #ffffff;
-            --success: #27ae60;
+            --success: #2ecc71;
             --danger: #e74c3c;
         }
 
@@ -83,19 +83,26 @@
 
         .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 
+        /* ΤΟ ΔΙΟΡΘΩΜΕΝΟ ΠΡΑΣΙΝΟ ΚΟΥΜΠΙ */
         .pdf-btn {
             background-color: var(--accent); color: white; text-decoration: none;
             padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
-            flex: 1; text-align: center; transition: 0.3s;
+            flex: 1; text-align: center; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
+            box-shadow: 0 4px 0 #1e8449; /* Σκουρόχρωμη πράσινη σκιά για βάθος */
         }
 
-        .pdf-btn:hover { background-color: #FFFFFF66; transform: translateY(-2px); }
+        .pdf-btn:hover { 
+            background-color: #2ecc71; 
+            transform: translateY(2px); 
+            box-shadow: 0 2px 0 #1e8449; 
+        }
 
         .nav-auth-btn {
             position: absolute; top: 20px; right: 20px;
             padding: 10px 20px; border: none; border-radius: 50px;
             font-weight: 700; cursor: pointer; color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .login-btn { background-color: var(--success); }
         .logout-btn { background-color: var(--danger); }
@@ -167,15 +174,12 @@
                     card.className = 'book-card';
                     
                     const buttons = book.pdf_urls.map(url => {
-                        // Πρώτα παίρνουμε το αρχικό όνομα
                         let rawFileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
                         
-                        // Ελέγχουμε αν υπάρχει το 'bkm' στο όνομα
                         const hasBookmarks = rawFileName.toLowerCase().includes('bkm');
                         const bkmBadge = hasBookmarks ? ' 🔖' : '';
                         const tooltip = hasBookmarks ? 'Διαθέτει σελιδοδείκτες (Bookmarks)' : 'Άνοιγμα PDF';
                         
-                        // Καθαρίζουμε το όνομα από το bkm και τα underscores
                         let cleanName = rawFileName
                                         .replace(/-bkm/i, '')
                                         .replace(/_bkm/i, '')
