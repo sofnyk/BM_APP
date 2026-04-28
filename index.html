@@ -4,163 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ψηφιακό Αναλόγιο</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-    :root { 
-        --primary: #2c3e50; 
-        --accent: #d35400; 
-        --bg: #f0f2f5; 
-        --white: #ffffff;
-        --success: #27ae60;
-        --danger: #e74c3c;
-    }
+        :root { 
+            --primary: #2c3e50; 
+            --accent: #d35400; 
+            --bg: #f4f7f6; 
+            --white: #ffffff;
+            --success: #27ae60;
+            --danger: #e74c3c;
+        }
 
-    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background-color: var(--bg); color: #333; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; padding: 0; background-color: var(--bg); color: #333; 
+        }
 
-    /* HEADER */
-    header {
-        background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
-        color: white; padding: 60px 20px; text-align: center; position: relative;
-    }
-    header h1 { margin: 0; font-size: 2.5em; font-weight: 800; letter-spacing: -1px; }
+        header {
+            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+            color: white; padding: 60px 20px; text-align: center; position: relative;
+        }
 
-    /* SEARCH */
-    .search-container { max-width: 650px; margin: -30px auto 30px auto; padding: 0 20px; }
-    #searchInput {
-        width: 100%; padding: 18px 25px; font-size: 1.1em; border: none; border-radius: 15px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1); outline: none; box-sizing: border-box;
-    }
+        header h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
 
-    /* CONTROLS (Πλέγμα/Λίστα) */
-    .view-controls { max-width: 1200px; margin: 0 auto 20px auto; padding: 0 20px; display: flex; justify-content: flex-end; gap: 8px; }
-    .view-btn { 
-        background: #fff; border: 1px solid #ddd; padding: 8px 16px; border-radius: 8px; 
-        cursor: pointer; font-weight: 600; color: #555; transition: 0.2s;
-    }
-    .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        /* ΔΙΟΡΘΩΣΗ 1: POSITION ΤΟΥ SEARCH BAR */
+        .search-container {
+            max-width: 700px;
+            margin: -30px auto 30px auto; /* Το ανέβασα λίγο πιο πάνω */
+            padding: 0 20px;
+            position: relative;
+            z-index: 1000; /* Για να είναι πάντα πάνω από όλα */
+        }
 
-    /* CARDS */
-    .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-    .book-card { 
-        background: var(--white); border-radius: 18px; padding: 25px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s;
-    }
-    .book-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-    .book-title { font-size: 1.25em; color: var(--primary); font-weight: 700; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .book-meta { font-size: 0.9em; color: #7f8c8d; margin-bottom: 20px; }
+        #searchInput {
+            width: 100%;
+            padding: 20px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
 
-    /* PDF BUTTONS - ΤΟ ΔΙΟΡΘΩΜΕΝΟ ΚΟΜΜΑΤΙ */
-    .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
-    .pdf-btn {
-        background-color: var(--accent); color: white; text-decoration: none; 
-        padding: 12px 15px; border-radius: 10px; font-weight: 700; font-size: 0.95em;
-        flex: 1; text-align: center; display: flex; align-items: center; justify-content: center;
-        transition: 0.2s; box-shadow: 0 4px 0 #a04000; /* Flat σκιά για βάθος */
-    }
-    .pdf-btn:hover { background-color: #e67e22; transform: translateY(2px); box-shadow: 0 2px 0 #a04000; }
-    .pdf-btn::before { content: '📖'; margin-right: 8px; font-size: 1.1em; } /* Εικονίδιο */
+        #searchInput:focus { transform: scale(1.01); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
 
-    /* LOGIN/AUTH BUTTON */
-    .nav-auth-btn {
-        position: absolute; top: 20px; right: 20px; padding: 10px 20px; border: none;
-        border-radius: 10px; font-weight: 700; cursor: pointer; color: white; transition: 0.2s;
-    }
-    .login-btn { background-color: var(--success); }
-    .login-btn:hover { background-color: #219150; }
-    .logout-btn { background-color: var(--danger); }
+        .view-controls {
+            max-width: 1200px; margin: 0 auto 20px auto; padding: 0 20px;
+            display: flex; justify-content: flex-end; gap: 10px;
+        }
 
-    /* MODAL */
-    .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 320px; }
-    .modal-content input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .view-btn {
+            background-color: var(--white); border: 1px solid #ddd; padding: 10px 18px;
+            border-radius: 10px; cursor: pointer; font-weight: 600; color: #666;
+        }
 
-    /* LIST VIEW */
-    .results-container.list-view { display: flex; flex-direction: column; gap: 12px; }
-    .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 25px; }
-    .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: auto; width: 180px; }
+        .view-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
 
-    @media (max-width: 600px) {
-        header h1 { font-size: 1.8em; }
-        .nav-auth-btn { position: static; margin: 10px auto; width: fit-content; }
-    }
-</style>
+        .results-container {
+            max-width: 1200px; margin: 0 auto; padding: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;
+        }
+
+        .book-card {
+            background: var(--white); border-radius: 18px; padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex;
+            flex-direction: column; justify-content: space-between; transition: 0.3s;
+        }
+
+        .book-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+
+        .book-title { font-size: 1.3em; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
+
+        /* ΔΙΟΡΘΩΣΗ 2: ΣΤΥΛ ΓΙΑ META DATA (Author & Year) */
+        .book-meta { font-size: 0.95em; color: #7f8c8d; margin-bottom: 15px; }
+        .book-meta div { margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+
+        .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+
+        .pdf-btn {
+            background-color: var(--accent); color: white; text-decoration: none;
+            padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
+            flex: 1; text-align: center; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+
+        .pdf-btn:hover { background-color: #b34700; transform: translateY(-2px); }
+
+        /* AUTH BUTTONS */
+        .nav-auth-btn {
+            position: absolute; top: 20px; right: 20px;
+            padding: 10px 20px; border: none; border-radius: 50px;
+            font-weight: 700; cursor: pointer; color: white;
+        }
+        .login-btn { background-color: var(--success); }
+        .logout-btn { background-color: var(--danger); }
+
+        /* LOGIN MODAL */
+        #auth-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; }
+        .modal-content input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+        /* LIST VIEW */
+        .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
+        .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
+        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
+    </style>
 </head>
 <body>
+
     <header>
         <h1>Ψηφιακό Αναλόγιο</h1>
         <p>Βιβλιοθήκη Βυζαντινής Μουσικής</p>
     </header>
-    <div class="search-container"><input type="text" id="searchInput" placeholder="🔍 Αναζήτηση..." oninput="searchBooks()"></div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση..." oninput="searchBooks()">
+    </div>
+
     <div class="view-controls">
         <button id="gridBtn" class="view-btn active" onclick="setView('grid')">🔲 Πλέγμα</button>
         <button id="listBtn" class="view-btn" onclick="setView('list')">📄 Λίστα</button>
     </div>
+
     <div class="results-container" id="results"></div>
 
     <script>
+        // Supabase Setup
         if (typeof window.supabaseClient === 'undefined') {
             const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
             window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         }
+
         let isLoggedIn = false;
-        let currentMode = 'login';
 
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
             const authDiv = document.createElement('div');
-            authDiv.innerHTML = isLoggedIn ? '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>' : '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>';
+            authDiv.innerHTML = isLoggedIn ? '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>' : '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος</button>';
             document.body.appendChild(authDiv);
-
-            const modal = document.createElement('div');
-            modal.id = "auth-modal";
-            modal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="auth-tabs">
-                        <div id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">Σύνδεση</div>
-                        <div id="tab-register" class="auth-tab" onclick="setAuthMode('register')">Εγγραφή</div>
-                    </div>
-                    <input type="email" id="a-email" placeholder="Email">
-                    <input type="password" id="a-password" placeholder="Κωδικός">
-                    <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Είσοδος</button>
-                    <p id="a-msg" style="margin-top: 15px; font-weight:bold; display:none;"></p>
-                    <button onclick="hideLogin()" style="background:none; border:none; color:#7f8c8d; margin-top:15px; cursor:pointer;">Ακύρωση</button>
-                </div>`;
-            document.body.appendChild(modal);
         }
-
-        window.setAuthMode = (mode) => {
-            currentMode = mode;
-            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
-            document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Δημιουργία Λογαριασμού';
-            document.getElementById('a-msg').style.display = 'none';
-        };
-
-        window.handleAuth = async () => {
-            const email = document.getElementById('a-email').value;
-            const password = document.getElementById('a-password').value;
-            const msgEl = document.getElementById('a-msg');
-            msgEl.style.display = 'block';
-            msgEl.style.color = 'var(--primary)';
-            msgEl.innerText = "Παρακαλώ περιμένετε...";
-
-            if (currentMode === 'login') {
-                const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) { msgEl.innerText = "Λάθος email ή κωδικός!"; msgEl.style.color = 'var(--danger)'; }
-                else location.reload();
-            } else {
-                const { error } = await window.supabaseClient.auth.signUp({ email, password });
-                if (error) { msgEl.innerText = error.message; msgEl.style.color = 'var(--danger)'; }
-                else { msgEl.innerText = "Επιτυχία! Ελέγξτε το email σας για επιβεβαίωση."; msgEl.style.color = 'var(--success)'; }
-            }
-        };
-
-        window.showLogin = () => document.getElementById('auth-modal').style.display = 'flex';
-        window.hideLogin = () => document.getElementById('auth-modal').style.display = 'none';
-        window.doLogout = async () => { await window.supabaseClient.auth.signOut(); location.reload(); };
 
         async function searchBooks() {
             const query = document.getElementById('searchInput').value;
@@ -169,17 +162,43 @@
                 const response = await fetch(`${window.location.origin}/search?q=${encodeURIComponent(query)}&free_only=${!isLoggedIn}`);
                 const data = await response.json();
                 container.innerHTML = '';
-                if (!data.data || data.data.length === 0) { container.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία.</div>'; return; }
+                
+                if (!data.data || data.data.length === 0) {
+                    container.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία.</div>';
+                    return;
+                }
+
                 data.data.forEach(book => {
                     const card = document.createElement('div');
                     card.className = 'book-card';
-                    card.innerHTML = `<div><div class="book-title">${book.title}</div><div style="color:#7f8c8d">👤 ${book.author_publisher || 'Άγνωστος'}</div></div>
-                        <div class="pdf-buttons">${book.pdf_urls.map(url => `<a href="${url}" target="_blank" class="pdf-btn">Άνοιγμα</a>`).join('')}</div>`;
+                    
+                    // ΔΙΟΡΘΩΣΗ 3: ΛΟΓΙΚΗ ΓΙΑ ΟΝΟΜΑΤΑ ΑΡΧΕΙΩΝ
+                    const buttons = book.pdf_urls.map(url => {
+                        // Παίρνουμε το όνομα του αρχείου από το URL και βγάζουμε την κατάληξη .pdf
+                        let fileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
+                        
+                        // Αν υπάρχουν πάνω από 2 αρχεία, δείχνουμε το όνομα. Αλλιώς δείχνουμε "Άνοιγμα".
+                        let label = book.pdf_urls.length > 2 ? `📖 ${fileName}` : "📖 Άνοιγμα";
+                        
+                        return `<a href="${url}" target="_blank" class="pdf-btn">${label}</a>`;
+                    }).join('');
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-meta">
+                                <div>👤 ${book.author_publisher || 'Άγνωστος'}</div>
+                                <div>📅 Έτος: ${book.publication_year || 'Χ.Χ.'}</div>
+                            </div>
+                        </div>
+                        <div class="pdf-buttons">${buttons}</div>
+                    `;
                     container.appendChild(card);
                 });
             } catch (e) { console.error(e); }
         }
 
+        // View Functions
         window.setView = (v) => {
             const c = document.getElementById('results');
             v === 'list' ? c.classList.add('list-view') : c.classList.remove('list-view');
@@ -188,11 +207,32 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
+        window.showLogin = () => document.getElementById('auth-modal').style.display = 'flex';
+        window.hideLogin = () => document.getElementById('auth-modal').style.display = 'none';
+        window.tryLogin = async () => {
+            const email = document.getElementById('l-email').value;
+            const password = document.getElementById('l-pass').value;
+            const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert("Λάθος στοιχεία!"); else location.reload();
+        };
+        window.doLogout = async () => { await window.supabaseClient.auth.signOut(); location.reload(); };
+
         window.onload = async () => {
             window.setView(localStorage.getItem('bm_view_pref') || 'grid');
             await setupAuth();
             searchBooks();
         };
     </script>
+
+    <div id="auth-modal">
+        <div class="modal-content">
+            <h3>Είσοδος Μελών</h3>
+            <input type="email" id="l-email" placeholder="Email">
+            <input type="password" id="l-pass" placeholder="Κωδικός">
+            <button onclick="tryLogin()" class="submit-btn">Σύνδεση</button>
+            <button onclick="hideLogin()" style="background:none; border:none; color:#7f8c8d; margin-top:15px; cursor:pointer;">Ακύρωση</button>
+        </div>
+    </div>
+
 </body>
 </html>
