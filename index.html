@@ -10,7 +10,7 @@
     <style>
         :root { 
             --primary: #2c3e50; 
-            --accent: #27ae60; 
+            --accent: #27ae60; /* ΤΟ ΝΕΟ ΠΡΑΣΙΝΟ */
             --bg: #f4f7f6; 
             --white: #ffffff;
             --success: #2ecc71;
@@ -83,27 +83,19 @@
 
         .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
 
-        .pdf-btn-group { display: flex; gap: 5px; flex: 1; min-width: 150px; }
-
+        /* ΤΟ ΔΙΟΡΘΩΜΕΝΟ ΠΡΑΣΙΝΟ ΚΟΥΜΠΙ */
         .pdf-btn {
             background-color: var(--accent); color: white; text-decoration: none;
-            padding: 12px 15px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
+            padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em;
             flex: 1; text-align: center; transition: 0.2s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
-            box-shadow: 0 4px 0 #1e8449; border: none; cursor: pointer; font-family: inherit;
+            box-shadow: 0 4px 0 #1e8449; /* Σκουρόχρωμη πράσινη σκιά για βάθος */
         }
 
-        .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
-
-        .pdf-btn.download-btn {
-            flex: 0 0 auto;
-            background-color: var(--primary);
-            box-shadow: 0 4px 0 #1a252f;
-        }
-        
-        .pdf-btn.download-btn:hover {
-            background-color: #34495e;
-            box-shadow: 0 2px 0 #1a252f;
+        .pdf-btn:hover { 
+            background-color: #2ecc71; 
+            transform: translateY(2px); 
+            box-shadow: 0 2px 0 #1e8449; 
         }
 
         .nav-auth-btn {
@@ -126,7 +118,7 @@
 
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
-        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 250px; }
+        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
     </style>
 </head>
 <body>
@@ -164,33 +156,6 @@
             document.body.appendChild(authDiv);
         }
 
-        // --- Η ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΕΞΑΝΑΓΚΑΖΕΙ ΤΟ DOWNLOAD ---
-        window.forceDownload = async (url, filename) => {
-            try {
-                // Φέρνουμε το αρχείο στο παρασκήνιο
-                const response = await fetch(url);
-                const blob = await response.blob();
-                
-                // Δημιουργούμε ένα προσωρινό τοπικό link
-                const blobUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = blobUrl;
-                a.download = filename; // Δίνουμε το όνομα του αρχείου
-                
-                // Πατάμε "εικονικά" το κουμπί
-                document.body.appendChild(a);
-                a.click();
-                
-                // Καθαρίζουμε τη μνήμη
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(a);
-            } catch (e) {
-                console.error("Σφάλμα κατά τη λήψη:", e);
-                alert("Σφάλμα! Δοκιμάστε να ανοίξετε το αρχείο και να το κατεβάσετε από εκεί.");
-            }
-        };
-
         async function searchBooks() {
             const query = document.getElementById('searchInput').value;
             const container = document.getElementById('results');
@@ -225,13 +190,7 @@
                         
                         let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
                         
-                        // ΚΑΛΟΥΜΕ ΤΗ ΝΕΑ ΣΥΝΑΡΤΗΣΗ ΓΙΑ ΤΟ DOWNLOAD
-                        return `
-                            <div class="pdf-btn-group">
-                                <a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>
-                                <button onclick="forceDownload('${url}', '${cleanName}.pdf')" class="pdf-btn download-btn" title="Απευθείας Λήψη">⬇️</button>
-                            </div>
-                        `;
+                        return `<a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>`;
                     }).join('');
 
                     card.innerHTML = `
