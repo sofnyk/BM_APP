@@ -98,7 +98,7 @@
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
 
-        /* ======== ΝΕΟ ΠΑΡΑΘΥΡΟ LOGIN ======== */
+        /* ======== MODAL & TABS ======== */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -122,7 +122,6 @@
 
         .modal-header { font-size: 1.5em; color: var(--primary); font-weight: 800; margin-bottom: 25px; }
 
-        /* Tabs Εγγραφής / Σύνδεσης */
         .auth-tabs { display: flex; background: #f1f5f9; border-radius: 12px; margin-bottom: 25px; padding: 4px; }
         .auth-tab {
             flex: 1; padding: 10px; cursor: pointer; font-weight: 600; color: #64748b;
@@ -130,7 +129,6 @@
         }
         .auth-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* Πεδία Εισαγωγής με Εικονίδια */
         .input-group { position: relative; margin-bottom: 15px; }
         .input-group input { 
             width: 100%; padding: 14px 14px 14px 40px; border: 2px solid #e2e8f0; 
@@ -140,6 +138,16 @@
         .input-group input:focus { border-color: var(--accent); background: white; outline: none; box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1); }
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.2em; }
 
+        /* ======== ΝΕΟ: PASSWORD CONSTRAINTS ======== */
+        .pwd-rules {
+            display: none; flex-direction: column; gap: 6px; text-align: left;
+            font-size: 0.85em; margin-top: -5px; margin-bottom: 15px; padding-left: 5px;
+        }
+        .pwd-rule { color: var(--danger); transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+        .pwd-rule::before { content: '❌'; font-size: 0.9em; }
+        .pwd-rule.valid { color: var(--accent); }
+        .pwd-rule.valid::before { content: '✅'; }
+
         .submit-btn { 
             width: 100%; padding: 14px; background: var(--primary); color: white; 
             border: none; border-radius: 12px; font-weight: 700; cursor: pointer; 
@@ -147,7 +155,6 @@
         }
         .submit-btn:hover { background: #1a252f; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(44, 62, 80, 0.3); }
 
-        /* Μηνύματα Επιτυχίας / Σφάλματος */
         #a-msg { margin-top: 15px; font-size: 0.9em; font-weight: 600; display: none; padding: 10px; border-radius: 8px; }
         .msg-error { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
         .msg-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
@@ -175,7 +182,7 @@
     <div id="auth-modal">
         <div class="modal-content">
             <button class="close-modal" onclick="hideLogin()" title="Κλείσιμο">&times;</button>
-            <div class="modal-header">Είσοδος Μελών</div>
+            <div class="modal-header">Πρόσβαση</div>
             
             <div class="auth-tabs">
                 <div id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">Σύνδεση</div>
@@ -186,9 +193,16 @@
                 <span class="input-icon">📧</span>
                 <input type="email" id="a-email" placeholder="Το Email σας">
             </div>
+            
             <div class="input-group">
                 <span class="input-icon">🔒</span>
-                <input type="password" id="a-password" placeholder="Ο Κωδικός σας">
+                <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()">
+            </div>
+            
+            <div id="pwd-constraints" class="pwd-rules">
+                <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
+                <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (Α-Ω, A-Z)</div>
+                <div id="rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
             </div>
 
             <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
@@ -204,6 +218,28 @@
         }
 
         let isLoggedIn = false;
+        let currentMode = 'login';
+        
+        // ======== ΝΕΟ: TIMEOUT INACTIVITY ========
+        let inactivityTimer;
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            // Ξεκινάει τον χρόνο ΜΟΝΟ αν ο χρήστης είναι συνδεδεμένος
+            if (isLoggedIn) {
+                // 30 λεπτά * 60 δευτερόλεπτα * 1000 χιλιοστά = 1800000 ms
+                inactivityTimer = setTimeout(() => {
+                    alert("⏳ Η συνεδρία σας έληξε λόγω αδράνειας. Παρακαλώ συνδεθείτε ξανά.");
+                    window.doLogout();
+                }, 1800000); 
+            }
+        }
+
+        // Ανιχνεύει κινήσεις για να μηδενίζει τον χρόνο
+        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, resetInactivityTimer);
+        });
+        // =========================================
 
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
@@ -211,6 +247,8 @@
             const authDiv = document.createElement('div');
             authDiv.innerHTML = isLoggedIn ? '<button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>' : '<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>';
             document.body.appendChild(authDiv);
+            
+            resetInactivityTimer(); // Ξεκινάει το ρολόι αν μόλις μπήκε
         }
 
         async function searchBooks() {
@@ -265,24 +303,42 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
-        // ======== ΝΕΑ ΛΟΓΙΚΗ ΓΙΑ ΤΟ MODAL ========
-        let currentMode = 'login';
-
         window.showLogin = () => {
             document.getElementById('auth-modal').style.display = 'flex';
-            document.getElementById('a-msg').style.display = 'none'; // Καθαρίζει παλιά μηνύματα
+            document.getElementById('a-msg').style.display = 'none'; 
+            document.getElementById('a-password').value = ''; // Καθαρίζει τον κωδικό
+            checkPassword(); // Επαναφέρει τα χρώματα
         };
         
-        window.hideLogin = () => {
-            document.getElementById('auth-modal').style.display = 'none';
+        window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
+
+        // ======== ΝΕΟ: ΕΛΕΓΧΟΣ ΚΩΔΙΚΟΥ ΖΩΝΤΑΝΑ ========
+        window.checkPassword = () => {
+            if (currentMode !== 'register') return; // Ελέγχει μόνο στην εγγραφή
+            
+            const val = document.getElementById('a-password').value;
+            const lenObj = document.getElementById('rule-len');
+            const upObj = document.getElementById('rule-up');
+            const numObj = document.getElementById('rule-num');
+
+            // Τουλάχιστον 6 χαρακτήρες
+            val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
+            // Ένα κεφαλαίο (Ελληνικό ή Λατινικό)
+            /[A-ZΑ-Ω]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            // Ένας αριθμός
+            /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
         };
 
         window.setAuthMode = (mode) => {
             currentMode = mode;
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
             document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Εγγραφή';
+            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
             document.getElementById('a-msg').style.display = 'none';
+            
+            // Εμφανίζει τους κανόνες μόνο στην καρτέλα Εγγραφής
+            document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none';
+            checkPassword();
         };
 
         function showMsg(text, type) {
@@ -302,6 +358,14 @@
                 return;
             }
 
+            // Έξτρα έλεγχος εγκυρότητας πριν την εγγραφή
+            if (currentMode === 'register') {
+                if (password.length < 6 || !/[A-ZΑ-Ω]/.test(password) || !/[0-9]/.test(password)) {
+                    showMsg("Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error");
+                    return;
+                }
+            }
+
             showMsg("Επεξεργασία...", "info");
 
             if (currentMode === 'login') {
@@ -316,7 +380,8 @@
                 if (error) {
                     showMsg(error.message, "error");
                 } else {
-                    showMsg("Επιτυχία! Αν απαιτείται, ελέγξτε το email σας.", "success");
+                    showMsg("Επιτυχία! Μπορείτε πλέον να συνδεθείτε.", "success");
+                    setTimeout(() => setAuthMode('login'), 2000); // Τον πάει στο login μετά από 2 δευτ.
                 }
             }
         };
