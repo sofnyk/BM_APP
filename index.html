@@ -15,7 +15,7 @@
             --white: #ffffff;
             --success: #2ecc71;
             --danger: #e74c3c;
-            --premium-gold: #d4af37; /* Χρώμα για τα Premium στοιχεία */
+            --premium-gold: #d4af37;
         }
 
         body { 
@@ -43,9 +43,8 @@
 
         #searchInput:focus { transform: scale(1.01); box-shadow: 0 12px 30px rgba(0,0,0,0.15); }
 
-        /* ======== PREMIUM CHIPS ======== */
         .premium-chips-container {
-            display: none; /* Κρυφό αρχικά */
+            display: none;
             max-width: 700px; margin: 0 auto 30px auto;
             padding: 0 20px; flex-wrap: wrap; gap: 10px;
             justify-content: center; animation: fadeIn 0.5s ease;
@@ -122,7 +121,6 @@
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
 
-        /* ======== MODAL & TABS ======== */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
@@ -196,10 +194,10 @@
     </div>
 
     <div id="premium-chips" class="premium-chips-container">
-        <div class="chip" onclick="quickSearch('ΑΝΑΣΤΑΣΙΜΑΤΑΡΙΟ')">Αναστασιματάριο</div>
-        <div class="chip" onclick="quickSearch('ΔΟΞΑΣΤΑΡΙΟ')">Δοξαστάριο</div>
-        <div class="chip" onclick="quickSearch('ΕΙΡΜΟΛΟΓΙΟ')">Ειρμολόγιο</div>
-        <div class="chip" onclick="quickSearch('ΤΥΠΙΚΟ')">Τυπικό</div>
+        <div class="chip" onclick="quickSearch('αναστασιματάριο')">Αναστασιματάριο</div>
+        <div class="chip" onclick="quickSearch('δοξαστάριο')">Δοξαστάριο</div>
+        <div class="chip" onclick="quickSearch('ειρμολόγιο')">Ειρμολόγιο</div>
+        <div class="chip" onclick="quickSearch('τυπικό')">Τυπικό</div>
     </div>
 
     <div class="view-controls">
@@ -251,7 +249,9 @@
         let isLoggedIn = false;
         let currentMode = 'login';
         
-        // TIMEOUT INACTIVITY
+        // ======== ΝΕΑ ΜΕΤΑΒΛΗΤΗ: Αποθηκεύει τα βιβλία στη μνήμη ========
+        let allBooks = []; 
+        
         let inactivityTimer;
         
         function resetInactivityTimer() {
@@ -264,22 +264,24 @@
             }
         }
 
-        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
-            window.addEventListener(evt, resetInactivityTimer);
-        });
+        ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => { window.addEventListener(evt, resetInactivityTimer); });
 
-        // ======== ΝΕΑ ΣΥΝΑΡΤΗΣΗ QUICK SEARCH ========
+        // ======== Η ΜΑΓΙΚΗ ΣΥΝΑΡΤΗΣΗ ========
+        // Καθαρίζει τόνους και τα κάνει όλα μικρά γράμματα
+        window.normalizeText = (text) => {
+            if (!text) return '';
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        };
+
         window.quickSearch = (term) => {
-            const searchInput = document.getElementById('searchInput');
-            searchInput.value = term;
-            searchBooks(); // Εκτελεί την αναζήτηση αμέσως
+            document.getElementById('searchInput').value = term;
+            searchBooks(); 
         };
 
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
             
-            // Εμφανίζει τα chips ΜΟΝΟ αν ο χρήστης είναι συνδεδεμένος
             document.getElementById('premium-chips').style.display = isLoggedIn ? 'flex' : 'none';
 
             const authDiv = document.createElement('div');
@@ -289,49 +291,73 @@
             resetInactivityTimer();
         }
 
-        async function searchBooks() {
-            const query = document.getElementById('searchInput').value;
+        // ======== ΦΟΡΤΩΝΕΙ ΟΛΑ ΤΑ ΒΙΒΛΙΑ ΜΙΑ ΦΟΡΑ ========
+        async function loadBooks() {
             const container = document.getElementById('results');
             try {
-                const response = await fetch(`${window.location.origin}/search?q=${encodeURIComponent(query)}&free_only=${!isLoggedIn}`);
+                // Ζητάμε όλα τα βιβλία χωρίς φίλτρο (κενό query)
+                const response = await fetch(`${window.location.origin}/search?q=&free_only=${!isLoggedIn}`);
                 const data = await response.json();
-                container.innerHTML = '';
                 
-                if (!data.data || data.data.length === 0) {
-                    container.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία.</div>';
-                    return;
-                }
-
-                data.data.forEach(book => {
-                    const card = document.createElement('div');
-                    card.className = 'book-card';
-                    
-                    const buttons = book.pdf_urls.map(url => {
-                        let rawFileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
-                        const hasBookmarks = rawFileName.toLowerCase().includes('bkm');
-                        const bkmBadge = hasBookmarks ? ' 🔖' : '';
-                        const tooltip = hasBookmarks ? 'Διαθέτει σελιδοδείκτες (Bookmarks)' : 'Άνοιγμα PDF';
-                        
-                        let cleanName = rawFileName.replace(/-bkm/i, '').replace(/_bkm/i, '').replace(/ bkm/i, '').replace(/bkm/i, '').replace(/_/g, ' ').trim();
-                        let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
-                        
-                        return `<a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>`;
-                    }).join('');
-
-                    card.innerHTML = `
-                        <div>
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-meta">
-                                <div>👤 ${book.author_publisher || 'Άγνωστος'}</div>
-                                <div>📅 Έτος: ${book.publication_year || 'Χ.Χ.'}</div>
-                            </div>
-                        </div>
-                        <div class="pdf-buttons">${buttons}</div>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (e) { console.error(e); }
+                allBooks = data.data || [];
+                searchBooks(); // Εκτελεί την αναζήτηση για να τα εμφανίσει
+            } catch (e) { 
+                console.error(e); 
+                container.innerHTML = '<div class="no-results">Σφάλμα φόρτωσης δεδομένων.</div>';
+            }
         }
+
+        // ======== ΑΣΤΡΑΠΙΑΙΑ ΤΟΠΙΚΗ ΑΝΑΖΗΤΗΣΗ ========
+        window.searchBooks = () => {
+            // Παίρνουμε αυτό που έγραψε ο χρήστης και του βγάζουμε τους τόνους/κεφαλαία
+            const query = window.normalizeText(document.getElementById('searchInput').value);
+            const container = document.getElementById('results');
+            
+            // Φιλτράρουμε τη λίστα allBooks που έχουμε ήδη στη μνήμη
+            const filteredBooks = allBooks.filter(book => {
+                const title = window.normalizeText(book.title);
+                const author = window.normalizeText(book.author_publisher);
+                // Αν βρει το query είτε στον τίτλο είτε στον συγγραφέα
+                return title.includes(query) || author.includes(query);
+            });
+
+            container.innerHTML = '';
+            
+            if (filteredBooks.length === 0) {
+                container.innerHTML = '<div class="no-results">Δεν βρέθηκαν βιβλία με αυτόν τον όρο.</div>';
+                return;
+            }
+
+            // Εμφάνιση των φιλτραρισμένων βιβλίων
+            filteredBooks.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                
+                const buttons = book.pdf_urls.map(url => {
+                    let rawFileName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '');
+                    const hasBookmarks = rawFileName.toLowerCase().includes('bkm');
+                    const bkmBadge = hasBookmarks ? ' 🔖' : '';
+                    const tooltip = hasBookmarks ? 'Διαθέτει σελιδοδείκτες (Bookmarks)' : 'Άνοιγμα PDF';
+                    
+                    let cleanName = rawFileName.replace(/-bkm/i, '').replace(/_bkm/i, '').replace(/ bkm/i, '').replace(/bkm/i, '').replace(/_/g, ' ').trim();
+                    let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmBadge}` : `📖 Άνοιγμα${bkmBadge}`;
+                    
+                    return `<a href="${url}" target="_blank" class="pdf-btn" title="${tooltip}">${label}</a>`;
+                }).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-meta">
+                            <div>👤 ${book.author_publisher || 'Άγνωστος'}</div>
+                            <div>📅 Έτος: ${book.publication_year || 'Χ.Χ.'}</div>
+                        </div>
+                    </div>
+                    <div class="pdf-buttons">${buttons}</div>
+                `;
+                container.appendChild(card);
+            });
+        };
 
         window.setView = (v) => {
             const c = document.getElementById('results');
@@ -353,7 +379,6 @@
 
         window.checkPassword = () => {
             if (currentMode !== 'register') return; 
-            
             const val = document.getElementById('a-password').value;
             const lenObj = document.getElementById('rule-len');
             const upObj = document.getElementById('rule-up');
@@ -363,25 +388,17 @@
             val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
             /[A-Z]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
             /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
-            
-            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) {
-                engObj.classList.add('valid');
-            } else {
-                engObj.classList.remove('valid');
-            }
+            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) { engObj.classList.add('valid'); } else { engObj.classList.remove('valid'); }
         };
 
         window.setAuthMode = (mode) => {
             currentMode = mode;
-            
             document.getElementById('a-email').value = '';
             document.getElementById('a-password').value = '';
-            
             document.getElementById('tab-login').classList.toggle('active', mode === 'login');
             document.getElementById('tab-register').classList.toggle('active', mode === 'register');
             document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
             document.getElementById('a-msg').style.display = 'none';
-            
             document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none';
             checkPassword();
         };
@@ -398,16 +415,12 @@
             const email = document.getElementById('a-email').value;
             const password = document.getElementById('a-password').value;
             
-            if (!email || !password) {
-                showMsg("Παρακαλώ συμπληρώστε email και κωδικό.", "error");
-                return;
-            }
+            if (!email || !password) { showMsg("Παρακαλώ συμπληρώστε email και κωδικό.", "error"); return; }
 
             if (currentMode === 'register') {
                 const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
                 if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) {
-                    showMsg("Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error");
-                    return;
+                    showMsg("Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error"); return;
                 }
             }
 
@@ -415,16 +428,10 @@
 
             if (currentMode === 'login') {
                 const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) {
-                    showMsg("Λάθος email ή κωδικός!", "error");
-                } else {
-                    location.reload();
-                }
+                if (error) { showMsg("Λάθος email ή κωδικός!", "error"); } else { location.reload(); }
             } else {
                 const { error } = await window.supabaseClient.auth.signUp({ email, password });
-                if (error) {
-                    showMsg(error.message, "error");
-                } else {
+                if (error) { showMsg(error.message, "error"); } else {
                     showMsg("Επιτυχία! Συνδέεστε...", "success");
                     setTimeout(() => location.reload(), 1000);
                 }
@@ -436,7 +443,9 @@
         window.onload = async () => {
             window.setView(localStorage.getItem('bm_view_pref') || 'grid');
             await setupAuth();
-            searchBooks();
+            
+            // Καλεί τη νέα συνάρτηση που φέρνει όλα τα βιβλία ΜΙΑ φορά
+            loadBooks(); 
         };
     </script>
 </body>
