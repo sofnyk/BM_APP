@@ -286,7 +286,6 @@
         let userFavorites = []; 
         let showingFavorites = false; 
 
-        // Βάλε εδώ το σωστό admin email σου
         const ADMIN_EMAIL = "sofokles3000@gmail.com"; 
 
         // ======== DARK MODE ========
@@ -308,7 +307,7 @@
 
         window.normalizeText = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
 
-        // ======== ΑΓΑΠΗΜΕΝΑ ========
+        // ======== ΑΓΑΠΗΜΕΝΑ (ΔΙΟΡΘΩΜΕΝΟ) ========
         function loadFavorites() {
             if (!isLoggedIn) return;
             const saved = localStorage.getItem('favs_' + userEmail);
@@ -320,12 +319,12 @@
             localStorage.setItem('favs_' + userEmail, JSON.stringify(userFavorites));
         }
 
-        window.toggleFav = (bookTitle) => {
+        window.toggleFav = (uniqueKey) => {
             if (!isLoggedIn) { alert("Πρέπει να συνδεθείτε για να αποθηκεύσετε αγαπημένα!"); return; }
-            if (userFavorites.includes(bookTitle)) {
-                userFavorites = userFavorites.filter(t => t !== bookTitle);
+            if (userFavorites.includes(uniqueKey)) {
+                userFavorites = userFavorites.filter(k => k !== uniqueKey);
             } else {
-                userFavorites.push(bookTitle);
+                userFavorites.push(uniqueKey);
             }
             saveFavorites();
             renderBooks(); 
@@ -412,8 +411,11 @@
             const query = window.normalizeText(document.getElementById('searchInput').value);
             
             filteredBooks = allBooks.filter(book => {
+                // Η ΜΑΓΕΙΑ ΕΔΩ: Χρησιμοποιούμε το URL του PDF ως μοναδικό κλειδί
+                const uniqueKey = book.pdf_urls && book.pdf_urls.length > 0 ? book.pdf_urls[0] : book.title;
+
                 if (showingFavorites) {
-                    return userFavorites.includes(book.title);
+                    return userFavorites.includes(uniqueKey);
                 } else {
                     const title = window.normalizeText(book.title);
                     const author = window.normalizeText(book.author_publisher);
@@ -443,8 +445,11 @@
                 const card = document.createElement('div');
                 card.className = 'book-card';
                 
-                const isFav = userFavorites.includes(book.title);
-                const favBtnHtml = isLoggedIn ? `<button class="fav-icon ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${book.title.replace(/'/g, "\\'")}')" title="Προσθήκη στα Αγαπημένα">${isFav ? '❤️' : '🤍'}</button>` : '';
+                // ΔΙΟΡΘΩΣΗ: Έλεγχος με το Unique Key αντί για τον τίτλο
+                const uniqueKey = book.pdf_urls && book.pdf_urls.length > 0 ? book.pdf_urls[0] : book.title;
+                const isFav = userFavorites.includes(uniqueKey);
+                
+                const favBtnHtml = isLoggedIn ? `<button class="fav-icon ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${uniqueKey.replace(/'/g, "\\'")}')" title="Προσθήκη στα Αγαπημένα">${isFav ? '❤️' : '🤍'}</button>` : '';
 
                 const buttons = book.pdf_urls.map(url => {
                     let cleanName = decodeURIComponent(url.split('/').pop()).replace(/\.pdf$/i, '').replace(/_bkm/i, '').replace(/bkm/i, '').replace(/_/g, ' ').trim();
@@ -472,7 +477,6 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
-        // ======== ΤΟ ΣΩΣΤΟ AUTH LOGIC ΕΠΕΣΤΡΕΨΕ ========
         window.showLogin = () => { 
             document.getElementById('auth-modal').style.display = 'flex'; 
             document.getElementById('a-email').value = ''; 
@@ -522,7 +526,14 @@
             
             if (currentMode === 'login') {
                 const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) { showMsg('a-msg', "Λάθος email ή κωδικός!", "error"); } else { location.reload(); }
+                if (error) { 
+                    showMsg('a-msg', "Λάθος email ή κωδικός!", "error"); 
+                    const passInput = document.getElementById('a-password');
+                    passInput.value = '';
+                    passInput.focus();
+                } else { 
+                    location.reload(); 
+                }
             } else {
                 const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
                 if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) {
