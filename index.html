@@ -195,7 +195,7 @@
         let allBooks = []; 
         let inactivityTimer;
 
-        const ADMIN_EMAIL = "sofos@gmail.com"; 
+        const ADMIN_EMAIL = "sofokles3000@gmail.com"; 
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -383,13 +383,13 @@
                     const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
                     
                     const { data, error } = await window.supabaseClient.storage
-                        .from('pdfs') 
+                        .from('books') 
                         .upload(safeName, file);
 
                     if (error) throw error;
 
                     const { data: publicUrlData } = window.supabaseClient.storage
-                        .from('pdfs')
+                        .from('books')
                         .getPublicUrl(safeName);
                         
                     uploadedUrls.push(publicUrlData.publicUrl);
