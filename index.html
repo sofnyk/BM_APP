@@ -158,6 +158,9 @@
         .msg-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
         .msg-info { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
         
+        /* Κανόνες Κωδικού */
+        #password-rules { display: none; font-size: 0.8em; color: #e74c3c; margin-top: -5px; margin-bottom: 15px; text-align: left; font-weight: 600; line-height: 1.4; }
+
         /* PDF MODAL */
         #pdf-modal .modal-content { width: 90%; height: 90%; padding: 50px 20px 20px 20px; display: flex; flex-direction: column; }
         #pdf-frame { flex: 1; border: none; border-radius: 10px; background: #ddd; width: 100%; }
@@ -180,7 +183,7 @@
         <div id="main-view">
             <div class="search-container">
                 <div class="search-wrapper">
-                    <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση (και χωρίς τόνους)..." oninput="handleSearchInput()">
+                    <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση (και χωρίς τόνους)..." oninput="handleSearchInput()" onkeydown="if(event.key === 'Enter') this.blur()">
                     <span id="clearSearchBtn" class="clear-search" onclick="clearSearch()" title="Καθαρισμός">✖</span>
                 </div>
             </div>
@@ -264,15 +267,15 @@
                         <div class="admin-form-container">
                             <div class="input-group">
                                 <label>Τίτλος Βιβλίου</label>
-                                <input type="text" id="add-title" placeholder="π.χ. Αναστασιματάριο">
+                                <input type="text" id="add-title" placeholder="π.χ. Αναστασιματάριο" onkeydown="if(event.key === 'Enter') uploadBook()">
                             </div>
                             <div class="input-group">
                                 <label>Δημιουργός / Εκδότης</label>
-                                <input type="text" id="add-author" placeholder="π.χ. Ιωάννης Πρωτοψάλτης">
+                                <input type="text" id="add-author" placeholder="π.χ. Ιωάννης Πρωτοψάλτης" onkeydown="if(event.key === 'Enter') uploadBook()">
                             </div>
                             <div class="input-group">
                                 <label>Χρονολογία</label>
-                                <input type="number" id="add-year" placeholder="π.χ. 1905">
+                                <input type="number" id="add-year" placeholder="π.χ. 1905" onkeydown="if(event.key === 'Enter') uploadBook()">
                             </div>
                             <div class="input-group">
                                 <label>Πρόσβαση</label>
@@ -321,11 +324,14 @@
             </div>
             <div class="input-group">
                 <span class="input-icon">📧</span>
-                <input type="email" id="a-email" placeholder="Email">
+                <input type="email" id="a-email" placeholder="Email" onkeydown="if(event.key === 'Enter') handleAuth()">
             </div>
             <div class="input-group">
                 <span class="input-icon">🔒</span>
-                <input type="password" id="a-password" placeholder="Κωδικός">
+                <input type="password" id="a-password" placeholder="Κωδικός" onkeydown="if(event.key === 'Enter') handleAuth()">
+            </div>
+            <div id="password-rules">
+                * Απαραίτητο: Τουλάχιστον 6 χαρακτήρες, 1 κεφαλαίο γράμμα, 1 αριθμός, και <b>μόνο</b> Λατινικοί χαρακτήρες.
             </div>
             <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
             <div id="a-msg" class="msg-box"></div>
@@ -464,7 +470,6 @@
         // ======== DATA & RENDERING ========
         async function loadBooks() {
             try {
-                // Χρησιμοποιούμε το endpoint του FastAPI που ήδη έχετε
                 const response = await fetch(`${window.location.origin}/search?q=&free_only=${!isLoggedIn}`);
                 const data = await response.json();
                 allBooks = data.data || [];
@@ -478,8 +483,16 @@
             const favBtn = isLoggedIn ? `<button class="fav-icon ${isFav?'is-fav':''}" onclick="toggleFav('${uniqueKey.replace(/'/g, "\\'")}')">${isFav?'❤️':'🤍'}</button>` : '';
 
             const buttons = book.pdf_urls.map(url => {
-                const label = book.pdf_urls.length > 1 ? `📖 ${decodeURIComponent(url.split('/').pop()).substring(0,15)}...` : `📖 Άνοιγμα`;
-                return `<button onclick="openPdf('${url}')" class="pdf-btn">${label}</button>`;
+                let fileName = decodeURIComponent(url.split('/').pop());
+                
+                // Αν το αρχείο ξεκινάει με Timestamp από το Supabase (π.χ. 1623919_Onoma.pdf), το αφαιρούμε για να φαίνεται όμορφα
+                if (/^\d+_/.test(fileName)) {
+                    fileName = fileName.substring(fileName.indexOf('_') + 1);
+                }
+
+                // Δείχνουμε ολόκληρο το όνομα αν έχει πάνω από 1 αρχείο, αλλιώς σκέτο "Άνοιγμα"
+                const label = book.pdf_urls.length > 1 ? `📖 ${fileName}` : `📖 Άνοιγμα`;
+                return `<button onclick="openPdf('${url}')" class="pdf-btn" title="${fileName}">${label}</button>`;
             }).join('');
 
             return `<div class="book-card">${favBtn}<div><div class="book-title">${book.title}</div><div class="book-meta">👤 ${book.author_publisher || 'Άγνωστος'}<br>📅 ${book.publication_year || 'Χ.Χ.'}</div></div><div class="pdf-buttons">${buttons}</div></div>`;
@@ -532,13 +545,31 @@
             document.getElementById('tab-login').classList.toggle('active', m==='login');
             document.getElementById('tab-register').classList.toggle('active', m==='register');
             document.getElementById('auth-submit').innerText = m==='login' ? 'Σύνδεση' : 'Εγγραφή';
+            // Εμφανίζουμε τους κανόνες κωδικού ΜΟΝΟ στην Εγγραφή
+            document.getElementById('password-rules').style.display = m==='register' ? 'block' : 'none';
         };
 
         window.handleAuth = async () => {
             const email = document.getElementById('a-email').value;
             const password = document.getElementById('a-password').value;
             const msg = document.getElementById('a-msg');
-            msg.style.display = 'block'; msg.innerText = "Παρακαλώ περιμένετε...";
+            
+            // Τοπικός έλεγχος κανόνων μόνο στην Εγγραφή
+            if (authMode === 'register') {
+                const hasUppercase = /[A-Z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                const isLatinOnly = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(password);
+                const isLongEnough = password.length >= 6;
+
+                if (!hasUppercase || !hasNumber || !isLatinOnly || !isLongEnough) {
+                    msg.style.display = 'block'; 
+                    msg.className = 'msg-box msg-error'; 
+                    msg.innerHTML = "Ο κωδικός δεν πληροί τους κανόνες ασφαλείας.<br>Ελέγξτε τις προϋποθέσεις.";
+                    return;
+                }
+            }
+
+            msg.style.display = 'block'; msg.className = 'msg-box msg-info'; msg.innerText = "Παρακαλώ περιμένετε...";
 
             const { error } = (authMode === 'login') 
                 ? await window.supabaseClient.auth.signInWithPassword({ email, password })
