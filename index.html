@@ -125,10 +125,10 @@
         .stat-box h3 { margin: 0 0 10px 0; font-size: 2em; color: var(--accent); }
         .stat-box p { margin: 0; color: #64748b; font-weight: 600; }
 
-        /* ADMIN FORM */
+        /* ADMIN FORM ΕΝΤΟΣ ΣΕΛΙΔΑΣ */
         .admin-form-container { background: var(--white); border: 1px solid var(--card-border); border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 600px; }
 
-        /* FOOTER */
+        /* ======== FOOTER ======== */
         .site-footer { background-color: #1a252f; color: #cbd5e1; text-align: center; padding: 25px 20px; font-size: 0.9em; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
         .footer-contact a { color: var(--accent); text-decoration: none; font-weight: 600; transition: 0.2s; }
         .footer-contact a:hover { color: var(--success); text-decoration: underline; }
@@ -149,7 +149,15 @@
         .input-group input, .input-group select { width: 100%; padding: 14px 14px 14px 40px; border: 2px solid var(--card-border); border-radius: 12px; box-sizing: border-box; font-size: 1em; font-family: inherit; color: var(--text-color); background: var(--input-bg); transition: 0.3s; }
         .input-group input:focus, .input-group select:focus { border-color: var(--accent); background: var(--white); outline: none; box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1); }
         .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 10;}
+        .input-group.admin-input input, .input-group.admin-input select { padding-left: 14px; }
+        .input-group.admin-input label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 0.9em; }
         
+        .pwd-rules { display: none; flex-direction: column; gap: 6px; text-align: left; font-size: 0.85em; margin-top: -5px; margin-bottom: 15px; padding-left: 5px; }
+        .pwd-rule { color: var(--danger); transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+        .pwd-rule::before { content: '❌'; font-size: 0.9em; }
+        .pwd-rule.valid { color: var(--accent); }
+        .pwd-rule.valid::before { content: '✅'; }
+
         .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1.05em; transition: 0.3s; margin-top: 10px; }
         .submit-btn:hover { background: #1a252f; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(44, 62, 80, 0.3); }
 
@@ -158,12 +166,10 @@
         .msg-success { background: #f0fdf4; color: #22c55e; border: 1px solid #bbf7d0; }
         .msg-info { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
         
-        /* Κανόνες Κωδικού */
-        #password-rules { display: none; font-size: 0.8em; color: #e74c3c; margin-top: -5px; margin-bottom: 15px; text-align: left; font-weight: 600; line-height: 1.4; }
-
-        /* PDF MODAL */
+        /* PDF VIEWER MODAL */
         #pdf-modal .modal-content { width: 90%; height: 90%; padding: 50px 20px 20px 20px; display: flex; flex-direction: column; }
         #pdf-frame { flex: 1; border: none; border-radius: 10px; background: #ddd; width: 100%; }
+        .pdf-actions { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
 
         .loader { display: none; border: 4px solid var(--card-border); border-top: 4px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -183,7 +189,7 @@
         <div id="main-view">
             <div class="search-container">
                 <div class="search-wrapper">
-                    <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση (και χωρίς τόνους)..." oninput="handleSearchInput()" onkeydown="if(event.key === 'Enter') this.blur()">
+                    <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση (και χωρίς τόνους)..." oninput="handleSearchInput()">
                     <span id="clearSearchBtn" class="clear-search" onclick="clearSearch()" title="Καθαρισμός">✖</span>
                 </div>
             </div>
@@ -196,7 +202,7 @@
             </div>
 
             <div class="view-controls">
-                <select id="sortCombo" class="sort-dropdown" onchange="searchBooks()">
+                <select id="sortCombo" class="sort-dropdown" onchange="renderBooks()">
                     <option value="alpha">⬇️ Αλφαβητικά (Α-Ω)</option>
                     <option value="newest">📅 Νεότερα πρώτα</option>
                     <option value="oldest">📅 Παλαιότερα πρώτα</option>
@@ -215,7 +221,7 @@
             <div class="profile-container">
                 <div class="profile-sidebar">
                     <div class="profile-avatar">👤</div>
-                    <div id="prof-email" class="profile-email">...</div>
+                    <div id="prof-email" class="profile-email">email@example.com</div>
                     <div class="profile-badge">Χρήστης</div>
                     <button onclick="doLogout()" class="submit-btn" style="background:var(--danger); width: 100%;">🚪 Αποσύνδεση</button>
                 </div>
@@ -230,6 +236,8 @@
 
                     <div id="pcontent-overview" class="pcontent-section active">
                         <h2>Καλώς ήρθατε στο Ψηφιακό Αναλόγιο</h2>
+                        <p style="color: #64748b;">Από αυτόν τον πίνακα ελέγχου μπορείτε να διαχειριστείτε την προσωπική σας βιβλιοθήκη.</p>
+                        
                         <div class="stats-grid">
                             <div class="stat-box">
                                 <h3 id="stat-total-favs">0</h3>
@@ -253,7 +261,7 @@
             <div class="profile-container">
                 <div class="profile-sidebar">
                     <div class="profile-avatar" style="border-color: var(--admin-color);">⚙️</div>
-                    <div id="admin-prof-email" class="profile-email">...</div>
+                    <div id="admin-prof-email" class="profile-email">email@example.com</div>
                     <div class="profile-badge admin">Διαχειριστής</div>
                     <button onclick="doLogout()" class="submit-btn" style="background:var(--danger); width: 100%;">🚪 Αποσύνδεση</button>
                 </div>
@@ -265,50 +273,53 @@
 
                     <div class="pcontent-section active">
                         <div class="admin-form-container">
-                            <div class="input-group">
+                            <div class="input-group admin-input">
                                 <label>Τίτλος Βιβλίου</label>
-                                <input type="text" id="add-title" placeholder="π.χ. Αναστασιματάριο" onkeydown="if(event.key === 'Enter') uploadBook()">
+                                <input type="text" id="add-title" placeholder="π.χ. Αναστασιματάριο (με bkm)">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group admin-input">
                                 <label>Δημιουργός / Εκδότης</label>
-                                <input type="text" id="add-author" placeholder="π.χ. Ιωάννης Πρωτοψάλτης" onkeydown="if(event.key === 'Enter') uploadBook()">
+                                <input type="text" id="add-author" placeholder="π.χ. Ιωάννης Πρωτοψάλτης">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group admin-input">
                                 <label>Χρονολογία</label>
-                                <input type="number" id="add-year" placeholder="π.χ. 1905" onkeydown="if(event.key === 'Enter') uploadBook()">
+                                <input type="number" id="add-year" placeholder="π.χ. 1905" min="1">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group admin-input">
                                 <label>Πρόσβαση</label>
                                 <select id="add-free">
                                     <option value="true">Δωρεάν (Όλοι)</option>
                                     <option value="false">Premium (Μόνο Συνδεδεμένοι)</option>
                                 </select>
                             </div>
-                            <div class="input-group">
-                                <label>Αρχείο PDF</label>
+                            <div class="input-group admin-input">
+                                <label>Αρχείο PDF (Επιλέξτε ένα ή περισσότερα)</label>
                                 <input type="file" id="add-file" accept=".pdf" multiple style="padding: 10px;">
                             </div>
 
                             <button onclick="uploadBook()" class="submit-btn" style="background: var(--admin-color);">Ανέβασμα & Αποθήκευση</button>
-                            <div id="admin-loader" class="loader"></div>
+                            <div id="admin-loader" class="loader" style="border-top-color: var(--admin-color);"></div>
                             <div id="admin-msg" class="msg-box"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <footer class="site-footer">
-        <div>&copy; <span id="current-year"></span> Ψηφιακό Αναλόγιο.</div>
-        <div class="footer-contact">✉️: <a href="mailto:sofoklisnyk@gmail.com">sofoklisnyk@gmail.com</a></div>
+        <div>&copy; <span id="current-year"></span> <span>Ψηφιακό Αναλόγιο.</span> Με επιφύλαξη παντός δικαιώματος.</div>
+        <div class="footer-contact">
+            ✉️ Επικοινωνία: <a href="mailto:sofoklisnyk@gmail.com">sofoklisnyk@gmail.com</a>
+        </div>
     </footer>
 
     <div id="pdf-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" onclick="closePdf()">&times;</button>
             <iframe id="pdf-frame" src=""></iframe>
-            <div style="margin-top:10px;">
+            <div class="pdf-actions">
                 <a id="pdf-external-link" href="#" target="_blank" class="view-btn" style="text-decoration:none;">Άνοιγμα σε νέα καρτέλα</a>
             </div>
         </div>
@@ -324,14 +335,17 @@
             </div>
             <div class="input-group">
                 <span class="input-icon">📧</span>
-                <input type="email" id="a-email" placeholder="Email" onkeydown="if(event.key === 'Enter') handleAuth()">
+                <input type="email" id="a-email" placeholder="Το Email σας" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
             <div class="input-group">
                 <span class="input-icon">🔒</span>
-                <input type="password" id="a-password" placeholder="Κωδικός" onkeydown="if(event.key === 'Enter') handleAuth()">
+                <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
-            <div id="password-rules">
-                * Απαραίτητο: Τουλάχιστον 6 χαρακτήρες, 1 κεφαλαίο γράμμα, 1 αριθμός, και <b>μόνο</b> Λατινικοί χαρακτήρες.
+            <div id="pwd-constraints" class="pwd-rules">
+                <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
+                <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
+                <div id="rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
+                <div id="rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
             </div>
             <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
             <div id="a-msg" class="msg-box"></div>
@@ -339,49 +353,57 @@
     </div>
 
     <script>
-        // Configuration
-        const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
-        window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        if (typeof window.supabaseClient === 'undefined') {
+            const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
+            window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        }
 
-        const ADMIN_EMAIL = "sofoklisnyk@gmail.com";
         let isLoggedIn = false;
         let isAdmin = false; 
         let userEmail = "";
+        let currentMode = 'login';
         let allBooks = []; 
+        let filteredBooks = []; 
         let userFavorites = []; 
-        let currentView = 'main';
-        let showingFavorites = false;
+        
+        let currentView = 'main'; 
+        let showingFavorites = false; 
 
-        // ======== THEME ========
+        // Η ΑΛΛΑΓΗ ΤΟΥ EMAIL ΕΓΙΝΕ ΕΔΩ:
+        const ADMIN_EMAIL = "sofoklisnyk@gmail.com"; 
+
+        // ======== DARK MODE ========
         function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             document.getElementById('themeBtn').innerText = isDark ? '☀️' : '🌙';
         }
 
         function loadTheme() {
-            if (localStorage.getItem('theme') === 'dark') {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeBtn').innerText = '☀️';
             }
         }
 
-        // ======== ΑΓΑΠΗΜΕΝΑ (SUPABASE) ========
-        async function loadFavorites() {
+        window.normalizeText = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+
+        // ======== ΑΓΑΠΗΜΕΝΑ ========
+        function loadFavorites() {
             if (!isLoggedIn) return;
-            try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                const { data, error } = await window.supabaseClient
-                    .from('favorites')
-                    .select('book_key')
-                    .eq('user_id', user.id);
-                
-                if (error) throw error;
-                userFavorites = data.map(fav => fav.book_key);
-                updateFavoriteBadges();
-            } catch (err) { console.error("Error loading favorites:", err); }
+            const saved = localStorage.getItem('favs_' + userEmail);
+            userFavorites = saved ? JSON.parse(saved) : [];
+            updateFavoriteBadges();
+        }
+
+        function saveFavorites() {
+            if (!isLoggedIn) return;
+            localStorage.setItem('favs_' + userEmail, JSON.stringify(userFavorites));
+            updateFavoriteBadges();
         }
 
         function updateFavoriteBadges() {
@@ -390,228 +412,313 @@
             document.getElementById('stat-total-favs').innerText = count;
         }
 
-        window.toggleFav = async (uniqueKey) => {
-            if (!isLoggedIn) { alert("Συνδεθείτε για να αποθηκεύσετε αγαπημένα!"); return; }
+        window.toggleFav = (uniqueKey) => {
+            if (!isLoggedIn) { alert("Πρέπει να συνδεθείτε για να αποθηκεύσετε αγαπημένα!"); return; }
+            if (userFavorites.includes(uniqueKey)) {
+                userFavorites = userFavorites.filter(k => k !== uniqueKey);
+            } else {
+                userFavorites.push(uniqueKey);
+            }
+            saveFavorites();
             
-            const isCurrentlyFav = userFavorites.includes(uniqueKey);
-            
-            // Optimistic Update
-            if (isCurrentlyFav) userFavorites = userFavorites.filter(k => k !== uniqueKey);
-            else userFavorites.push(uniqueKey);
-            
-            updateFavoriteBadges();
-            showingFavorites ? renderProfileFavorites() : searchBooks();
-
-            // Sync with DB
-            try {
-                const { data: { user } } = await window.supabaseClient.auth.getUser();
-                if (isCurrentlyFav) {
-                    await window.supabaseClient.from('favorites').delete().match({ user_id: user.id, book_key: uniqueKey });
-                } else {
-                    await window.supabaseClient.from('favorites').insert([{ user_id: user.id, book_key: uniqueKey }]);
-                }
-            } catch (err) { console.error("Sync error:", err); }
+            if (currentView === 'account' && showingFavorites) {
+                renderProfileFavorites();
+            } else {
+                searchBooks();
+            }
         };
 
-        // ======== SPA NAVIGATION ========
+        // ======== VIEWS NAVIGATION (SPA) ========
         window.switchView = (viewName) => {
             currentView = viewName;
-            ['main', 'account', 'admin'].forEach(v => document.getElementById(v + '-view').style.display = 'none');
+            
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('account-view').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'none';
+            
             document.getElementById(viewName + '-view').style.display = 'block';
 
-            if (viewName === 'main') { showingFavorites = false; searchBooks(); }
-            else if (viewName === 'account') { 
+            if (viewName === 'main') {
+                showingFavorites = false;
+                searchBooks();
+            } else if (viewName === 'account') {
                 document.getElementById('prof-email').innerText = userEmail;
                 document.getElementById('stat-total-books').innerText = allBooks.length;
-                switchProfileTab('overview'); 
+                switchProfileTab('overview');
+            } else if (viewName === 'admin') {
+                document.getElementById('admin-prof-email').innerText = userEmail;
             }
-            else if (viewName === 'admin') { document.getElementById('admin-prof-email').innerText = userEmail; }
+
             updateHeaderButtons();
         };
 
         window.switchProfileTab = (tabName) => {
             document.querySelectorAll('.ptab:not(.admin-tab)').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('#account-view .pcontent-section').forEach(c => c.classList.remove('active'));
+            
             document.getElementById('ptab-' + tabName).classList.add('active');
             document.getElementById('pcontent-' + tabName).classList.add('active');
-            
-            showingFavorites = (tabName === 'favorites');
-            if (showingFavorites) renderProfileFavorites();
+
+            if (tabName === 'favorites') {
+                showingFavorites = true;
+                renderProfileFavorites();
+            } else {
+                showingFavorites = false;
+            }
         };
 
-        // ======== AUTH ========
+        // ======== SETUP AUTH ========
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
+            
             if (isLoggedIn) {
                 userEmail = session.user.email;
-                isAdmin = (userEmail === ADMIN_EMAIL);
-                await loadFavorites();
+                if (userEmail === ADMIN_EMAIL) isAdmin = true;
+                loadFavorites();
             }
+
             document.getElementById('premium-chips').style.display = isLoggedIn ? 'flex' : 'none';
             updateHeaderButtons();
         }
 
         function updateHeaderButtons() {
-            const wrapper = document.querySelector('.auth-buttons-wrapper') || document.createElement('div');
-            wrapper.className = 'auth-buttons-wrapper';
+            const existing = document.querySelector('.auth-buttons-wrapper');
+            if(existing) existing.remove();
+
+            const authDiv = document.createElement('div');
+            authDiv.className = 'auth-buttons-wrapper';
+            
             if (!isLoggedIn) {
-                wrapper.innerHTML = `<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος</button>`;
+                authDiv.innerHTML = `<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>`;
             } else {
                 let html = '';
-                if (currentView !== 'main') html += `<button onclick="switchView('main')" class="nav-auth-btn" style="background:var(--primary)">🏠 Αρχική</button>`;
-                if (currentView !== 'account') html += `<button onclick="switchView('account')" class="nav-auth-btn account-btn">👤 Προφίλ</button>`;
-                if (isAdmin && currentView !== 'admin') html += `<button onclick="switchView('admin')" class="nav-auth-btn" style="background:var(--admin-color)">⚙️ Διαχείριση</button>`;
-                wrapper.innerHTML = html;
+                
+                if (currentView !== 'main') {
+                    html += `<button onclick="switchView('main')" class="nav-auth-btn account-btn" style="background: var(--primary);">🏠 Αρχική</button>`;
+                }
+                
+                if (currentView !== 'account') {
+                    html += `<button onclick="switchView('account')" class="nav-auth-btn account-btn">👤 Προφίλ</button>`;
+                }
+
+                if (isAdmin && currentView !== 'admin') {
+                    html += `<button onclick="switchView('admin')" class="nav-auth-btn" style="background: var(--admin-color);">⚙️ Διαχείριση</button>`;
+                }
+                
+                authDiv.innerHTML = html;
             }
-            if (!document.querySelector('.auth-buttons-wrapper')) document.body.appendChild(wrapper);
+            
+            document.body.appendChild(authDiv);
         }
 
-        // ======== DATA & RENDERING ========
+        // ======== FETCH & RENDER BOOKS ========
         async function loadBooks() {
+            const container = document.getElementById('results');
             try {
                 const response = await fetch(`${window.location.origin}/search?q=&free_only=${!isLoggedIn}`);
                 const data = await response.json();
                 allBooks = data.data || [];
-                searchBooks();
-            } catch (e) { console.error(e); }
+                searchBooks(); 
+            } catch (e) { 
+                console.error(e); 
+            }
         }
 
         function createBookHTML(book) {
-            const uniqueKey = (book.pdf_urls && book.pdf_urls.length > 0) ? book.pdf_urls[0] : book.title;
+            const uniqueKey = book.pdf_urls && book.pdf_urls.length > 0 ? book.pdf_urls[0] : book.title;
             const isFav = userFavorites.includes(uniqueKey);
-            const favBtn = isLoggedIn ? `<button class="fav-icon ${isFav?'is-fav':''}" onclick="toggleFav('${uniqueKey.replace(/'/g, "\\'")}')">${isFav?'❤️':'🤍'}</button>` : '';
+            const favBtnHtml = isLoggedIn ? `<button class="fav-icon ${isFav ? 'is-fav' : ''}" onclick="toggleFav('${uniqueKey.replace(/'/g, "\\'")}')" title="Προσθήκη στα Αγαπημένα">${isFav ? '❤️' : '🤍'}</button>` : '';
 
             const buttons = book.pdf_urls.map(url => {
-                let fileName = decodeURIComponent(url.split('/').pop());
+                let originalFileName = decodeURIComponent(url.split('/').pop());
+                let fileName = originalFileName;
                 
-                // Αν το αρχείο ξεκινάει με Timestamp από το Supabase (π.χ. 1623919_Onoma.pdf), το αφαιρούμε για να φαίνεται όμορφα
+                // Αφαίρεση του timestamp του Supabase αν υπάρχει στην αρχή
                 if (/^\d+_/.test(fileName)) {
                     fileName = fileName.substring(fileName.indexOf('_') + 1);
                 }
 
-                // Δείχνουμε ολόκληρο το όνομα αν έχει πάνω από 1 αρχείο, αλλιώς σκέτο "Άνοιγμα"
-                const label = book.pdf_urls.length > 1 ? `📖 ${fileName}` : `📖 Άνοιγμα`;
-                return `<button onclick="openPdf('${url}')" class="pdf-btn" title="${fileName}">${label}</button>`;
+                // Ελέγχουμε αν υπάρχει ο όρος 'bkm' στο αρχείο (αδιαφορώντας για κεφαλαία/μικρά)
+                const hasBkm = /bkm/i.test(fileName);
+                const bkmIcon = hasBkm ? ' 🔖' : '';
+
+                // Καθαρίζουμε το όνομα για να φαίνεται όμορφο (βγάζουμε το .pdf, το bkm και τις κάτω παύλες)
+                let cleanName = fileName.replace(/\.pdf$/i, '')
+                                        .replace(/_?bkm_?/i, '')
+                                        .replace(/_/g, ' ')
+                                        .trim();
+
+                // Αν το βιβλίο έχει πάνω από 1 αρχείο δείχνουμε το όνομα, αλλιώς "Άνοιγμα"
+                let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmIcon}` : `📖 Άνοιγμα${bkmIcon}`;
+                
+                // Προσθέτουμε τίτλο-επεξήγηση στο tooltip αν έχει σελιδοδείκτες
+                let tooltip = hasBkm ? `${fileName} (Με Σελιδοδείκτες)` : fileName;
+
+                return `<button onclick="openPdf('${url}')" class="pdf-btn" title="${tooltip}">${label}</button>`;
             }).join('');
 
-            return `<div class="book-card">${favBtn}<div><div class="book-title">${book.title}</div><div class="book-meta">👤 ${book.author_publisher || 'Άγνωστος'}<br>📅 ${book.publication_year || 'Χ.Χ.'}</div></div><div class="pdf-buttons">${buttons}</div></div>`;
+            return `
+                <div class="book-card">
+                    ${favBtnHtml}
+                    <div>
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-meta"><div>👤 ${book.author_publisher || 'Άγνωστος'}</div><div>📅 Έτος: ${book.publication_year || 'Χ.Χ.'}</div></div>
+                    </div>
+                    <div class="pdf-buttons">${buttons}</div>
+                </div>
+            `;
         }
 
         window.searchBooks = () => {
-            const query = document.getElementById('searchInput').value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const query = window.normalizeText(document.getElementById('searchInput').value);
             const sortVal = document.getElementById('sortCombo').value;
+            const container = document.getElementById('results');
             
-            let filtered = allBooks.filter(b => {
-                const t = b.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                const a = (b.author_publisher||'').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                return t.includes(query) || a.includes(query);
+            let filtered = allBooks.filter(book => {
+                const title = window.normalizeText(book.title);
+                const author = window.normalizeText(book.author_publisher);
+                return title.includes(query) || author.includes(query);
             });
 
-            if(sortVal==='alpha') filtered.sort((a,b) => a.title.localeCompare(b.title, 'el'));
-            else if(sortVal==='newest') filtered.sort((a,b) => (b.publication_year||0) - (a.publication_year||0));
-            else filtered.sort((a,b) => (a.publication_year||9999) - (b.publication_year||9999));
+            filtered.sort((a, b) => {
+                if (sortVal === 'alpha') return a.title.localeCompare(b.title, 'el');
+                if (sortVal === 'newest') return (b.publication_year || 0) - (a.publication_year || 0);
+                if (sortVal === 'oldest') return (a.publication_year || 9999) - (b.publication_year || 9999);
+            });
 
-            const container = document.getElementById('results');
-            container.innerHTML = filtered.length ? filtered.map(b => createBookHTML(b)).join('') : '<p style="grid-column:1/-1;text-align:center">Δεν βρέθηκαν βιβλία.</p>';
+            container.innerHTML = '';
+            if (filtered.length === 0) { 
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:#94a3b8;">Δεν βρέθηκαν βιβλία.</div>`; 
+                return; 
+            }
+            container.innerHTML = filtered.map(b => createBookHTML(b)).join('');
+        };
+
+        // Για να διατηρήσει το functionality του παλιού dropdown
+        window.renderBooks = () => {
+            searchBooks();
         };
 
         window.renderProfileFavorites = () => {
-            const favs = allBooks.filter(b => userFavorites.includes(b.pdf_urls[0] || b.title));
             const container = document.getElementById('profile-fav-results');
-            container.innerHTML = favs.length ? favs.map(b => createBookHTML(b)).join('') : '<p>Δεν έχετε αγαπημένα.</p>';
+            
+            const favBooks = allBooks.filter(book => {
+                const uniqueKey = book.pdf_urls && book.pdf_urls.length > 0 ? book.pdf_urls[0] : book.title;
+                return userFavorites.includes(uniqueKey);
+            });
+
+            container.innerHTML = '';
+            if (favBooks.length === 0) { 
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:#94a3b8; width:100%;">Δεν έχετε προσθέσει αγαπημένα ακόμα. Ξεκινήστε να πατάτε τις καρδούλες!</div>`; 
+                return; 
+            }
+            container.innerHTML = favBooks.map(b => createBookHTML(b)).join('');
         };
 
         window.setView = (v) => {
-            document.getElementById('results').classList.toggle('list-view', v==='list');
-            document.getElementById('profile-fav-results').classList.toggle('list-view', v==='list');
-            document.getElementById('gridBtn').classList.toggle('active', v==='grid');
-            document.getElementById('listBtn').classList.toggle('active', v==='list');
+            const mainC = document.getElementById('results');
+            const profC = document.getElementById('profile-fav-results');
+            
+            if(v === 'list') { mainC.classList.add('list-view'); profC.classList.add('list-view'); } 
+            else { mainC.classList.remove('list-view'); profC.classList.remove('list-view'); }
+            
+            document.getElementById('gridBtn').classList.toggle('active', v === 'grid');
+            document.getElementById('listBtn').classList.toggle('active', v === 'list');
             localStorage.setItem('bm_view_pref', v);
         };
 
-        // ======== HELPERS ========
+        // ======== PDF, SEARCH, MODALS ========
         window.openPdf = (url) => { document.getElementById('pdf-frame').src = url; document.getElementById('pdf-external-link').href = url; document.getElementById('pdf-modal').style.display = 'flex'; };
         window.closePdf = () => { document.getElementById('pdf-modal').style.display = 'none'; document.getElementById('pdf-frame').src = ""; };
-        window.handleSearchInput = () => { document.getElementById('clearSearchBtn').style.display = document.getElementById('searchInput').value ? 'block' : 'none'; searchBooks(); };
-        window.clearSearch = () => { document.getElementById('searchInput').value = ''; handleSearchInput(); };
-        window.quickSearch = (t) => { document.getElementById('searchInput').value = t; handleSearchInput(); };
-        window.showLogin = () => { document.getElementById('auth-modal').style.display = 'flex'; };
+
+        window.handleSearchInput = () => { const val = document.getElementById('searchInput').value; document.getElementById('clearSearchBtn').style.display = val.length > 0 ? 'block' : 'none'; searchBooks(); };
+        window.clearSearch = () => { document.getElementById('searchInput').value = ''; document.getElementById('clearSearchBtn').style.display = 'none'; searchBooks(); };
+        window.quickSearch = (term) => { document.getElementById('searchInput').value = term; handleSearchInput(); };
+
+        window.showLogin = () => { document.getElementById('auth-modal').style.display = 'flex'; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = ''; document.getElementById('a-msg').style.display = 'none'; setAuthMode('login'); };
         window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
-        
-        let authMode = 'login';
-        window.setAuthMode = (m) => { 
-            authMode = m; 
-            document.getElementById('tab-login').classList.toggle('active', m==='login');
-            document.getElementById('tab-register').classList.toggle('active', m==='register');
-            document.getElementById('auth-submit').innerText = m==='login' ? 'Σύνδεση' : 'Εγγραφή';
-            // Εμφανίζουμε τους κανόνες κωδικού ΜΟΝΟ στην Εγγραφή
-            document.getElementById('password-rules').style.display = m==='register' ? 'block' : 'none';
+
+        window.checkPassword = () => {
+            if (currentMode !== 'register') return; 
+            const val = document.getElementById('a-password').value;
+            const lenObj = document.getElementById('rule-len'); const upObj = document.getElementById('rule-up'); const numObj = document.getElementById('rule-num'); const engObj = document.getElementById('rule-eng');
+
+            val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
+            /[A-Z]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
+            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) { engObj.classList.add('valid'); } else { engObj.classList.remove('valid'); }
         };
 
+        window.setAuthMode = (mode) => {
+            currentMode = mode; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = '';
+            document.getElementById('tab-login').classList.toggle('active', mode === 'login'); document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
+            document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none'; document.getElementById('a-msg').style.display = 'none';
+        };
+
+        function showMsg(id, text, type) { const msgEl = document.getElementById(id); msgEl.style.display = 'block'; msgEl.className = 'msg-box'; msgEl.classList.add(`msg-${type}`); msgEl.innerText = text; }
+
         window.handleAuth = async () => {
-            const email = document.getElementById('a-email').value;
-            const password = document.getElementById('a-password').value;
-            const msg = document.getElementById('a-msg');
+            const email = document.getElementById('a-email').value; const password = document.getElementById('a-password').value;
+            if (!email || !password) { showMsg('a-msg', "Παρακαλώ συμπληρώστε email και κωδικό.", "error"); return; }
+            showMsg('a-msg', "Επεξεργασία...", "info");
             
-            // Τοπικός έλεγχος κανόνων μόνο στην Εγγραφή
-            if (authMode === 'register') {
-                const hasUppercase = /[A-Z]/.test(password);
-                const hasNumber = /[0-9]/.test(password);
-                const isLatinOnly = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(password);
-                const isLongEnough = password.length >= 6;
-
-                if (!hasUppercase || !hasNumber || !isLatinOnly || !isLongEnough) {
-                    msg.style.display = 'block'; 
-                    msg.className = 'msg-box msg-error'; 
-                    msg.innerHTML = "Ο κωδικός δεν πληροί τους κανόνες ασφαλείας.<br>Ελέγξτε τις προϋποθέσεις.";
-                    return;
-                }
+            if (currentMode === 'login') {
+                const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) { showMsg('a-msg', "Λάθος email ή κωδικός!", "error"); const passInput = document.getElementById('a-password'); passInput.value = ''; passInput.focus();
+                } else { location.reload(); }
+            } else {
+                const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
+                if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) { showMsg('a-msg', "Ο κωδικός δεν πληροί τις προϋποθέσεις.", "error"); return; }
+                const { error } = await window.supabaseClient.auth.signUp({ email, password });
+                if (error) { showMsg('a-msg', error.message, "error"); } else { showMsg('a-msg', "Επιτυχία! Συνδέεστε...", "success"); setTimeout(() => location.reload(), 1000); }
             }
-
-            msg.style.display = 'block'; msg.className = 'msg-box msg-info'; msg.innerText = "Παρακαλώ περιμένετε...";
-
-            const { error } = (authMode === 'login') 
-                ? await window.supabaseClient.auth.signInWithPassword({ email, password })
-                : await window.supabaseClient.auth.signUp({ email, password });
-
-            if (error) { msg.className = 'msg-box msg-error'; msg.innerText = error.message; }
-            else location.reload();
         };
 
         window.doLogout = async () => { await window.supabaseClient.auth.signOut(); location.reload(); };
 
+        // ======== ADMIN UPLOAD LOGIC ========
         window.uploadBook = async () => {
-            const title = document.getElementById('add-title').value;
-            const author = document.getElementById('add-author').value;
-            const year = document.getElementById('add-year').value;
-            const isFree = document.getElementById('add-free').value === "true";
-            const files = document.getElementById('add-file').files;
-            const msg = document.getElementById('admin-msg');
+            const title = document.getElementById('add-title').value; const author = document.getElementById('add-author').value; const year = document.getElementById('add-year').value; const isFree = document.getElementById('add-free').value === "true"; const fileInput = document.getElementById('add-file');
             
-            if (!title || !files.length) { msg.style.display='block'; msg.className='msg-box msg-error'; msg.innerText="Τίτλος και Αρχείο υποχρεωτικά"; return; }
+            if (!title) { showMsg('admin-msg', "Ο Τίτλος είναι υποχρεωτικός!", "error"); return; }
+            if (year && parseInt(year) <= 0) { showMsg('admin-msg', "Η χρονολογία πρέπει να είναι μεγαλύτερη του 0!", "error"); return; }
+            if (fileInput.files.length === 0) { showMsg('admin-msg', "Παρακαλώ επιλέξτε τουλάχιστον 1 αρχείο PDF.", "error"); return; }
 
-            document.getElementById('admin-loader').style.display = 'block';
+            document.getElementById('admin-loader').style.display = 'block'; showMsg('admin-msg', "Ανέβασμα αρχείων, παρακαλώ περιμένετε...", "info");
+
             try {
-                let urls = [];
-                for (let f of files) {
-                    const name = Date.now() + "_" + f.name.replace(/\s/g, '_');
-                    const { error } = await window.supabaseClient.storage.from('books').upload(name, f);
+                let uploadedUrls = [];
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i]; const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+                    const { data, error } = await window.supabaseClient.storage.from('books').upload(safeName, file);
                     if (error) throw error;
-                    urls.push(window.supabaseClient.storage.from('books').getPublicUrl(name).data.publicUrl);
+                    const { data: publicUrlData } = window.supabaseClient.storage.from('books').getPublicUrl(safeName);
+                    uploadedUrls.push(publicUrlData.publicUrl);
                 }
-                const { error: dbErr } = await window.supabaseClient.from('books').insert([{ title, author_publisher: author, publication_year: parseInt(year), is_free: isFree, pdf_urls: urls }]);
-                if (dbErr) throw dbErr;
-                location.reload();
-            } catch (err) { alert(err.message); }
+
+                const { error: dbError } = await window.supabaseClient.from('books').insert([{ title: title, author_publisher: author, publication_year: parseInt(year) || null, is_free: isFree, pdf_urls: uploadedUrls }]);
+                if (dbError) throw dbError;
+
+                document.getElementById('admin-loader').style.display = 'none'; showMsg('admin-msg', "Το βιβλίο προστέθηκε με επιτυχία!", "success");
+                
+                // Καθαρισμός πεδίων
+                document.getElementById('add-title').value = '';
+                document.getElementById('add-author').value = '';
+                document.getElementById('add-year').value = '';
+                document.getElementById('add-file').value = '';
+
+                loadBooks(); 
+            } catch (err) { console.error(err); document.getElementById('admin-loader').style.display = 'none'; showMsg('admin-msg', "Σφάλμα: " + err.message, "error"); }
         };
 
         window.onload = async () => {
-            document.getElementById('current-year').innerText = new Date().getFullYear();
+            document.getElementById('current-year').textContent = new Date().getFullYear();
             loadTheme();
             await setupAuth();
-            setView(localStorage.getItem('bm_view_pref') || 'grid');
-            loadBooks();
+            window.setView(localStorage.getItem('bm_view_pref') || 'grid');
+            loadBooks(); 
         };
     </script>
 </body>
