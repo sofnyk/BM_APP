@@ -19,9 +19,25 @@
             --admin-color: #f39c12;
         }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: #333; }
+        /* Για να "κολλάει" το footer πάντα στο κάτω μέρος, αλλάζουμε το body σε flex */
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: var(--bg); 
+            color: #333; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
         header { background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); color: white; padding: 60px 20px; text-align: center; position: relative; }
         header h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
+
+        /* Το main-content σπρώχνει το footer προς τα κάτω */
+        .main-content {
+            flex: 1;
+        }
 
         .search-container { max-width: 700px; margin: -30px auto 20px auto; padding: 0 20px; position: relative; z-index: 1000; }
         #searchInput { width: 100%; padding: 20px 30px; font-size: 1.1em; border: none; border-radius: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); outline: none; transition: 0.3s; box-sizing: border-box; }
@@ -36,7 +52,7 @@
         .view-btn { background-color: var(--white); border: 1px solid #e2e8f0; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; color: #64748b; }
         .view-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
 
-        .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .results-container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding-bottom: 40px; }
         .book-card { background: var(--white); border-radius: 18px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; border: 1px solid #f1f5f9; }
         .book-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .book-title { font-size: 1.3em; color: var(--primary); font-weight: 700; margin-bottom: 8px; }
@@ -47,7 +63,6 @@
         .pdf-btn { background-color: var(--accent); color: white; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em; flex: 1; text-align: center; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 0 #1e8449; }
         .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
 
-        /* ======== ΔΙΟΡΘΩΣΗ ΚΟΥΜΠΙΩΝ HEADER ======== */
         .auth-buttons-wrapper { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; z-index: 100; }
         .nav-auth-btn { padding: 10px 20px; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s; }
         .nav-auth-btn:hover { transform: scale(1.05); }
@@ -57,6 +72,18 @@
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
+
+        /* ======== COPYRIGHT FOOTER ======== */
+        .site-footer {
+            background-color: var(--primary);
+            color: #cbd5e1; /* Απαλό γκρι-λευκό */
+            text-align: center;
+            padding: 25px 20px;
+            font-size: 0.9em;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            margin-top: auto; /* Εξασφαλίζει ότι κάθεται στο κάτω μέρος */
+        }
+        .site-footer span { font-weight: bold; color: var(--white); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -102,23 +129,29 @@
         <p>Βιβλιοθήκη Βυζαντινής Μουσικής</p>
     </header>
 
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση..." oninput="searchBooks()">
+    <div class="main-content">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση..." oninput="searchBooks()">
+        </div>
+
+        <div id="premium-chips" class="premium-chips-container">
+            <div class="chip" onclick="quickSearch('αναστασιματάριο')">Αναστασιματάριο</div>
+            <div class="chip" onclick="quickSearch('δοξαστάριο')">Δοξαστάριο</div>
+            <div class="chip" onclick="quickSearch('ειρμολόγιο')">Ειρμολόγιο</div>
+            <div class="chip" onclick="quickSearch('τυπικό')">Τυπικό</div>
+        </div>
+
+        <div class="view-controls">
+            <button id="gridBtn" class="view-btn active" onclick="setView('grid')">🔲 Πλέγμα</button>
+            <button id="listBtn" class="view-btn" onclick="setView('list')">📄 Λίστα</button>
+        </div>
+
+        <div class="results-container" id="results"></div>
     </div>
 
-    <div id="premium-chips" class="premium-chips-container">
-        <div class="chip" onclick="quickSearch('αναστασιματάριο')">Αναστασιματάριο</div>
-        <div class="chip" onclick="quickSearch('δοξαστάριο')">Δοξαστάριο</div>
-        <div class="chip" onclick="quickSearch('ειρμολόγιο')">Ειρμολόγιο</div>
-        <div class="chip" onclick="quickSearch('τυπικό')">Τυπικό</div>
-    </div>
-
-    <div class="view-controls">
-        <button id="gridBtn" class="view-btn active" onclick="setView('grid')">🔲 Πλέγμα</button>
-        <button id="listBtn" class="view-btn" onclick="setView('list')">📄 Λίστα</button>
-    </div>
-
-    <div class="results-container" id="results"></div>
+    <footer class="site-footer">
+        &copy; <span id="current-year"></span> <span>Ψηφιακό Αναλόγιο.</span> Με επιφύλαξη παντός δικαιώματος.
+    </footer>
 
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-content">
@@ -226,7 +259,6 @@
             document.getElementById('premium-chips').style.display = isLoggedIn ? 'flex' : 'none';
 
             const authDiv = document.createElement('div');
-            // ΔΙΟΡΘΩΣΗ: Προσθήκη κλάσης 'auth-buttons-wrapper' για το σωστό styling
             authDiv.className = 'auth-buttons-wrapper';
             
             if (isAdmin) {
@@ -364,7 +396,6 @@
             
             if (!title) { showMsg('admin-msg', "Ο Τίτλος είναι υποχρεωτικός!", "error"); return; }
             
-            // ΔΙΟΡΘΩΣΗ: Έλεγχος αν η χρονολογία είναι θετικός αριθμός
             if (year && parseInt(year) <= 0) { 
                 showMsg('admin-msg', "Η χρονολογία πρέπει να είναι μεγαλύτερη του 0!", "error"); 
                 return; 
@@ -421,6 +452,9 @@
         };
 
         window.onload = async () => {
+            // Ορίζουμε αυτόματα το τρέχον έτος στο footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
             window.setView(localStorage.getItem('bm_view_pref') || 'grid');
             await setupAuth();
             loadBooks(); 
