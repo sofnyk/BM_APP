@@ -47,9 +47,13 @@
         .pdf-btn { background-color: var(--accent); color: white; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em; flex: 1; text-align: center; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 0 #1e8449; }
         .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
 
-        .nav-auth-btn { position: absolute; top: 20px; padding: 10px 20px; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s; }
+        /* ======== ΔΙΟΡΘΩΣΗ ΚΟΥΜΠΙΩΝ HEADER ======== */
+        .auth-buttons-wrapper { position: absolute; top: 20px; right: 20px; display: flex; gap: 12px; z-index: 100; }
+        .nav-auth-btn { padding: 10px 20px; border: none; border-radius: 50px; font-weight: 700; cursor: pointer; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s; }
         .nav-auth-btn:hover { transform: scale(1.05); }
-        
+        .login-btn { background-color: var(--success); }
+        .logout-btn { background-color: var(--danger); }
+
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
@@ -126,11 +130,11 @@
             </div>
             <div class="input-group">
                 <span class="input-icon">📧</span>
-                <input type="email" id="a-email" placeholder="Το Email σας">
+                <input type="email" id="a-email" placeholder="Το Email σας" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
             <div class="input-group">
                 <span class="input-icon">🔒</span>
-                <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()">
+                <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
             <div id="pwd-constraints" class="pwd-rules">
                 <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
@@ -158,7 +162,7 @@
             </div>
             <div class="input-group admin-input">
                 <label>Χρονολογία</label>
-                <input type="number" id="add-year" placeholder="π.χ. 1905">
+                <input type="number" id="add-year" placeholder="π.χ. 1905" min="1">
             </div>
             <div class="input-group admin-input">
                 <label>Πρόσβαση</label>
@@ -179,7 +183,6 @@
     </div>
 
     <script>
-        // SUPABASE SETUP
         if (typeof window.supabaseClient === 'undefined') {
             const supabaseUrl = 'https://kfaodzjcdtmwwxwyzasq.supabase.co';
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8';
@@ -187,14 +190,12 @@
         }
 
         let isLoggedIn = false;
-        let isAdmin = false; // Νέα μεταβλητή για να ελέγχει αν είναι ο Admin
+        let isAdmin = false; 
         let currentMode = 'login';
         let allBooks = []; 
         let inactivityTimer;
 
-        // ======== ΤΟ EMAIL ΤΟΥ ΔΙΑΧΕΙΡΙΣΤΗ ========
-        // Εδώ βάζεις το δικό σου email. Αν κάποιος συνδεθεί με αυτό, θα βλέπει τη διαχείριση.
-        const ADMIN_EMAIL = "sofokles3000@gmail.com"; 
+        const ADMIN_EMAIL = "sofos@gmail.com"; 
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
@@ -214,12 +215,10 @@
 
         window.quickSearch = (term) => { document.getElementById('searchInput').value = term; searchBooks(); };
 
-        // ======== ΕΛΕΓΧΟΣ ΓΙΑ ADMIN ========
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
             
-            // Ελέγχει αν υπάρχει session ΚΑΙ αν το email ταιριάζει με το δικό σου
             if (isLoggedIn && session.user.email === ADMIN_EMAIL) {
                 isAdmin = true;
             }
@@ -227,23 +226,20 @@
             document.getElementById('premium-chips').style.display = isLoggedIn ? 'flex' : 'none';
 
             const authDiv = document.createElement('div');
+            // ΔΙΟΡΘΩΣΗ: Προσθήκη κλάσης 'auth-buttons-wrapper' για το σωστό styling
+            authDiv.className = 'auth-buttons-wrapper';
             
-            // Αν είναι ο Admin, δείξε και τα δύο κουμπιά
             if (isAdmin) {
                 authDiv.innerHTML = `
-                    <button onclick="showAdmin()" class="nav-auth-btn" style="right: 120px; background: var(--admin-color);">⚙️ Διαχείριση</button>
-                    <button onclick="doLogout()" class="nav-auth-btn logout-btn" style="right: 20px;">🚪 Έξοδος</button>
+                    <button onclick="showAdmin()" class="nav-auth-btn" style="background: var(--admin-color);">⚙️ Διαχείριση</button>
+                    <button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>
                 `;
-            } 
-            // Αν είναι απλός χρήστης (isLoggedIn αλλά όχι isAdmin), δείξε μόνο την Έξοδο
-            else if (isLoggedIn) {
+            } else if (isLoggedIn) {
                 authDiv.innerHTML = `
-                    <button onclick="doLogout()" class="nav-auth-btn logout-btn" style="right: 20px;">🚪 Έξοδος</button>
+                    <button onclick="doLogout()" class="nav-auth-btn logout-btn">🚪 Έξοδος</button>
                 `;
-            } 
-            // Αν δεν είναι συνδεδεμένος
-            else {
-                authDiv.innerHTML = `<button onclick="showLogin()" class="nav-auth-btn login-btn" style="right: 20px;">🔑 Είσοδος / Εγγραφή</button>`;
+            } else {
+                authDiv.innerHTML = `<button onclick="showLogin()" class="nav-auth-btn login-btn">🔑 Είσοδος / Εγγραφή</button>`;
             }
             
             document.body.appendChild(authDiv);
@@ -304,7 +300,20 @@
 
         window.showLogin = () => { document.getElementById('auth-modal').style.display = 'flex'; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = ''; document.getElementById('a-msg').style.display = 'none'; setAuthMode('login'); };
         window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
-        window.checkPassword = () => { /* rules */ };
+        window.checkPassword = () => {
+            if (currentMode !== 'register') return; 
+            const val = document.getElementById('a-password').value;
+            const lenObj = document.getElementById('rule-len');
+            const upObj = document.getElementById('rule-up');
+            const numObj = document.getElementById('rule-num');
+            const engObj = document.getElementById('rule-eng');
+
+            val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
+            /[A-Z]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
+            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) { engObj.classList.add('valid'); } else { engObj.classList.remove('valid'); }
+        };
+        
         window.setAuthMode = (mode) => {
             currentMode = mode; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = '';
             document.getElementById('tab-login').classList.toggle('active', mode === 'login'); document.getElementById('tab-register').classList.toggle('active', mode === 'register');
@@ -325,6 +334,10 @@
                 const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) { showMsg('a-msg', "Λάθος email ή κωδικός!", "error"); } else { location.reload(); }
             } else {
+                const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
+                if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) {
+                    showMsg('a-msg', "Ο κωδικός δεν πληροί τις προϋποθέσεις ασφαλείας.", "error"); return;
+                }
                 const { error } = await window.supabaseClient.auth.signUp({ email, password });
                 if (error) { showMsg('a-msg', error.message, "error"); } else { showMsg('a-msg', "Επιτυχία! Συνδέεστε...", "success"); setTimeout(() => location.reload(), 1000); }
             }
@@ -350,6 +363,13 @@
             const fileInput = document.getElementById('add-file');
             
             if (!title) { showMsg('admin-msg', "Ο Τίτλος είναι υποχρεωτικός!", "error"); return; }
+            
+            // ΔΙΟΡΘΩΣΗ: Έλεγχος αν η χρονολογία είναι θετικός αριθμός
+            if (year && parseInt(year) <= 0) { 
+                showMsg('admin-msg', "Η χρονολογία πρέπει να είναι μεγαλύτερη του 0!", "error"); 
+                return; 
+            }
+
             if (fileInput.files.length === 0) { showMsg('admin-msg', "Παρακαλώ επιλέξτε τουλάχιστον 1 αρχείο PDF.", "error"); return; }
 
             document.getElementById('admin-loader').style.display = 'block';
@@ -363,13 +383,13 @@
                     const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
                     
                     const { data, error } = await window.supabaseClient.storage
-                        .from('books') 
+                        .from('pdfs') 
                         .upload(safeName, file);
 
                     if (error) throw error;
 
                     const { data: publicUrlData } = window.supabaseClient.storage
-                        .from('books')
+                        .from('pdfs')
                         .getPublicUrl(safeName);
                         
                     uploadedUrls.push(publicUrlData.publicUrl);
