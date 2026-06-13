@@ -20,7 +20,6 @@ app.add_middleware(
 PUBLIC_BASE_URL = "https://pub-fba8694ecb8b4b62b4b01308c630548c.r2.dev"
 
 # --- Η ΝΕΑ ΣΟΥ ΒΑΣΗ ΣΤΟ CLOUD (Supabase) ---
-# ΚΑΝΕ ΕΠΙΚΟΛΛΗΣΗ ΤΟ URI LINK ΣΟΥ ΑΝΑΜΕΣΑ ΣΤΑ ΑΥΤΑΚΙΑ:
 DB_URL = "postgresql://postgres.kfaodzjcdtmwwxwyzasq:SupaSofos02%23@aws-1-eu-central-1.pooler.supabase.com:6543/postgres"
 
 class LinkRequest(BaseModel):
@@ -35,6 +34,11 @@ class NewBook(BaseModel):
 @app.get("/")
 def serve_home():
     return FileResponse("index.html")
+
+# ΠΡΟΣΘΗΚΗ: Εδώ σερβίρουμε το αρχείο που ζητάει η Google!
+@app.get("/robots.txt")
+def serve_robots():
+    return FileResponse("robots.txt")
 
 @app.get("/search")
 def search_books(q: str = "", free_only: bool = False):
