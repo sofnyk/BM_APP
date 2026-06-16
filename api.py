@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -39,6 +39,20 @@ def serve_home():
 @app.get("/robots.txt")
 def serve_robots():
     return FileResponse("robots.txt")
+
+# ΝΕΑ ΠΡΟΣΘΗΚΗ: Το endpoint για το sitemap
+@app.get("/sitemap.xml")
+def serve_sitemap():
+    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+            <loc>https://psifiobook.onrender.com/</loc>
+            <changefreq>daily</changefreq>
+            <priority>1.0</priority>
+        </url>
+    </urlset>
+    """
+    return Response(content=xml_content, media_type="application/xml")
 
 @app.get("/search")
 def search_books(q: str = "", free_only: bool = False):
