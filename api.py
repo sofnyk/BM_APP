@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -16,11 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- ΤΟ URL ΤΟΥ CLOUDFLARE ΣΟΥ ---
-PUBLIC_BASE_URL = "https://pub-fba8694ecb8b4b62b4b01308c630548c.r2.dev"
-
 # --- Η ΝΕΑ ΣΟΥ ΒΑΣΗ ΣΤΟ CLOUD (Supabase) ---
 DB_URL = "postgresql://postgres.kfaodzjcdtmwwxwyzasq:SupaSofos02%23@aws-1-eu-central-1.pooler.supabase.com:6543/postgres"
+SUPABASE_STORAGE_URL = "https://kfaodzjcdtmwwxwyzasq.supabase.co/storage/v1/object/public/books"
 
 class LinkRequest(BaseModel):
     book_id: int
@@ -35,24 +33,10 @@ class NewBook(BaseModel):
 def serve_home():
     return FileResponse("index.html")
 
-# ΠΡΟΣΘΗΚΗ: Εδώ σερβίρουμε το αρχείο που ζητάει η Google!
 @app.get("/robots.txt")
 def serve_robots():
-    return FileResponse("robots.txt")
-
-# ΝΕΑ ΠΡΟΣΘΗΚΗ: Το endpoint για το sitemap
-@app.get("/sitemap.xml")
-def serve_sitemap():
-    xml_content = """<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        <url>
-            <loc>https://psifiobook.onrender.com/</loc>
-            <changefreq>daily</changefreq>
-            <priority>1.0</priority>
-        </url>
-    </urlset>
-    """
-    return Response(content=xml_content, media_type="application/xml")
+    robot_content = "User-agent: *\nAllow: /\n"
+    return PlainTextResponse(robot_content)
 
 @app.get("/search")
 def search_books(q: str = "", free_only: bool = False):
@@ -67,7 +51,7 @@ def search_books(q: str = "", free_only: bool = False):
             AND file_key IS NOT NULL
         """
         
-        # Αν κάποιος δεν είναι συνδεδεμένος, του δείχνουμε ΜΟΝΟ τα δωρεάν!
+        # Αν κάποιος δεν είναι συνδεδεμένος, του δείχνουμε ΜΟΝΟ τα δωρεάν
         if free_only:
             query += " AND is_free = TRUE"
             
@@ -80,7 +64,17 @@ def search_books(q: str = "", free_only: bool = False):
         
         for book in books:
             files = book['file_key'].split(', ')
-            book['pdf_urls'] = [f"{PUBLIC_BASE_URL}/{urllib.parse.quote(f)}" for f in files]
+            clean_urls = []
+            for f in files:
+                f = f.strip()
+                # Αν το όνομα του αρχείου είναι ήδη ολόκληρο link (Supabase), το κρατάμε ως έχει
+                if f.startswith('http'):
+                    clean_urls.append(f)
+                else:
+                    # Αλλιώς, φτιάχνουμε το νέο σωστό link του Supabase
+                    clean_urls.append(f"{SUPABASE_STORAGE_URL}/{urllib.parse.quote(f)}")
+                    
+            book['pdf_urls'] = clean_urls
             
         cursor.close()
         conn.close()
