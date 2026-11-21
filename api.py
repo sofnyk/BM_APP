@@ -18,7 +18,8 @@ app.add_middleware(
 
 # --- Η ΝΕΑ ΣΟΥ ΒΑΣΗ ΣΤΟ CLOUD (Supabase) ---
 DB_URL = "postgresql://postgres.kfaodzjcdtmwwxwyzasq:SupaSofos02%23@aws-1-eu-central-1.pooler.supabase.com:6543/postgres"
-SUPABASE_STORAGE_URL = "https://kfaodzjcdtmwwxwyzasq.supabase.co/storage/v1/object/public/books"
+SUPABASE_STORAGE_URL = "https://pub-fba8694ecb8b4b62b4b01308c630548c.r2.dev"
+
 
 class LinkRequest(BaseModel):
     book_id: int
