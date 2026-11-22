@@ -137,7 +137,7 @@
         .stat-box h3 { margin: 0 0 10px 0; font-size: 2em; color: var(--accent); }
         .stat-box p { margin: 0; color: #64748b; font-weight: 600; }
 
-        /* ADMIN FORM ΕΝΤΟΣ ΣΕΛΙΔΑΣ */
+        /* ADMIN & SECURITY FORMS ΕΝΤΟΣ ΣΕΛΙΔΑΣ */
         .admin-form-container { background: var(--white); border: 1px solid var(--card-border); border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 600px; }
 
         /* ======== FOOTER ======== */
@@ -169,6 +169,9 @@
         .pwd-rule::before { content: '❌'; font-size: 0.9em; }
         .pwd-rule.valid { color: var(--accent); }
         .pwd-rule.valid::before { content: '✅'; }
+
+        .forgot-link { display: inline-block; margin-top: 12px; font-size: 0.9em; color: #3498db; cursor: pointer; font-weight: 600; background: none; border: none; padding: 0; }
+        .forgot-link:hover { text-decoration: underline; }
 
         .submit-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1.05em; transition: 0.3s; margin-top: 10px; }
         .submit-btn:hover { background: #1a252f; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(44, 62, 80, 0.3); }
@@ -257,11 +260,12 @@
                         <div class="ptab" onclick="switchProfileTab('favorites')" id="ptab-favorites">
                             ❤️ Αγαπημένα <span class="ptab-badge" id="fav-count">0</span>
                         </div>
+                        <div class="ptab" onclick="switchProfileTab('security')" id="ptab-security">🔒 Ασφάλεια</div>
                     </div>
 
                     <div id="pcontent-overview" class="pcontent-section active">
                         <h2>Καλώς ήρθατε στο Ψηφιακό Αναλόγιο</h2>
-                        <p style="color: #64748b;">Από αυτόν τον πίνακα ελέγχου μπορείτε να διαχειριστείτε την προσωπική σας βιβλιοθήκη.</p>
+                        <p style="color: #64748b;">Από αυτόν τον πίνακα ελέγχου μπορείτε να διαχειριστείτε την προσωπική σας βιβλιοθήκη και τα αγαπημένα σας, τα οποία συγχρονίζονται αυτόματα σε όλες τις συσκευές σας.</p>
                         
                         <div class="stats-grid">
                             <div class="stat-box">
@@ -277,6 +281,28 @@
 
                     <div id="pcontent-favorites" class="pcontent-section">
                         <div class="results-container" id="profile-fav-results" style="padding: 10px 0;"></div>
+                    </div>
+
+                    <div id="pcontent-security" class="pcontent-section">
+                        <div class="admin-form-container">
+                            <h3 style="margin-top:0; color: var(--primary);">Αλλαγή Κωδικού Πρόσβασης</h3>
+                            <div class="input-group admin-input">
+                                <label>Νέος Κωδικός</label>
+                                <input type="password" id="new-pwd" placeholder="Εισάγετε νέο κωδικό" oninput="checkProfilePassword()">
+                            </div>
+                            <div class="input-group admin-input">
+                                <label>Επιβεβαίωση Νέου Κωδικού</label>
+                                <input type="password" id="confirm-pwd" placeholder="Επαναλάβετε τον νέο κωδικό" onkeypress="if(event.key === 'Enter') changePassword()">
+                            </div>
+                            <div id="prof-pwd-constraints" class="pwd-rules" style="display:flex;">
+                                <div id="prof-rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
+                                <div id="prof-rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
+                                <div id="prof-rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
+                                <div id="prof-rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
+                            </div>
+                            <button onclick="changePassword()" class="submit-btn" style="background: var(--accent);">Ενημέρωση Κωδικού</button>
+                            <div id="pwd-change-msg" class="msg-box"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -371,8 +397,8 @@
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" onclick="hideLogin()">&times;</button>
-            <div class="modal-header">Πρόσβαση</div>
-            <div class="auth-tabs">
+            <div id="auth-modal-header" class="modal-header">Πρόσβαση</div>
+            <div id="auth-tabs-bar" class="auth-tabs">
                 <div id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">Σύνδεση</div>
                 <div id="tab-register" class="auth-tab" onclick="setAuthMode('register')">Εγγραφή</div>
             </div>
@@ -380,7 +406,7 @@
                 <span class="input-icon">📧</span>
                 <input type="email" id="a-email" placeholder="Το Email σας" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
-            <div class="input-group">
+            <div id="a-password-group" class="input-group">
                 <span class="input-icon">🔒</span>
                 <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()" onkeypress="if(event.key === 'Enter') handleAuth()">
             </div>
@@ -391,6 +417,8 @@
                 <div id="rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
             </div>
             <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
+            <button id="forgot-pwd-btn" class="forgot-link" onclick="setAuthMode('reset')">Ξέχασα τον κωδικό μου</button>
+            <button id="back-to-login-btn" class="forgot-link" style="display:none;" onclick="setAuthMode('login')">← Επιστροφή στη Σύνδεση</button>
             <div id="a-msg" class="msg-box"></div>
         </div>
     </div>
@@ -405,9 +433,10 @@
         let isLoggedIn = false;
         let isAdmin = false; 
         let userEmail = "";
+        let userId = null;
+        let accessToken = null;
         let currentMode = 'login';
         let allBooks = []; 
-        let filteredBooks = []; 
         let userFavorites = []; 
         
         let currentView = 'main'; 
@@ -437,18 +466,24 @@
 
         window.normalizeText = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
 
-        // ======== ΑΓΑΠΗΜΕΝΑ ========
-        function loadFavorites() {
-            if (!isLoggedIn) return;
-            const saved = localStorage.getItem('favs_' + userEmail);
-            userFavorites = saved ? JSON.parse(saved) : [];
-            updateFavoriteBadges();
-        }
+        // ======== ΑΓΑΠΗΜΕΝΑ (ΣΥΓΧΡΟΝΙΣΜΕΝΑ ΜΕ SUPABASE) ========
+        async function loadFavorites() {
+            if (!isLoggedIn || !userId) return;
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('favorites')
+                    .select('book_key')
+                    .eq('user_id', userId);
 
-        function saveFavorites() {
-            if (!isLoggedIn) return;
-            localStorage.setItem('favs_' + userEmail, JSON.stringify(userFavorites));
-            updateFavoriteBadges();
+                if (error) {
+                    console.error("Σφάλμα φόρτωσης αγαπημένων:", error);
+                    return;
+                }
+                userFavorites = (data || []).map(row => row.book_key);
+                updateFavoriteBadges();
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function updateFavoriteBadges() {
@@ -457,15 +492,40 @@
             document.getElementById('stat-total-favs').innerText = count;
         }
 
-        window.toggleFav = (uniqueKey) => {
-            if (!isLoggedIn) { alert("Πρέπει να συνδεθείτε για να αποθηκεύσετε αγαπημένα!"); return; }
-            if (userFavorites.includes(uniqueKey)) {
+        window.toggleFav = async (uniqueKey) => {
+            if (!isLoggedIn || !userId) {
+                alert("Πρέπει να συνδεθείτε για να αποθηκεύσετε αγαπημένα!");
+                return;
+            }
+
+            const alreadyFav = userFavorites.includes(uniqueKey);
+
+            if (alreadyFav) {
+                const { error } = await window.supabaseClient
+                    .from('favorites')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('book_key', uniqueKey);
+
+                if (error) {
+                    alert("Σφάλμα κατά την αφαίρεση από τα αγαπημένα.");
+                    return;
+                }
                 userFavorites = userFavorites.filter(k => k !== uniqueKey);
             } else {
+                const { error } = await window.supabaseClient
+                    .from('favorites')
+                    .insert([{ user_id: userId, book_key: uniqueKey }]);
+
+                if (error) {
+                    alert("Σφάλμα κατά την αποθήκευση στα αγαπημένα.");
+                    return;
+                }
                 userFavorites.push(uniqueKey);
             }
-            saveFavorites();
-            
+
+            updateFavoriteBadges();
+
             if (currentView === 'account' && showingFavorites) {
                 renderProfileFavorites();
             } else {
@@ -512,20 +572,42 @@
             }
         };
 
-        // ======== SETUP AUTH ========
+        // ======== SETUP AUTH & PASSWORD RECOVERY ========
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
             
             if (isLoggedIn) {
                 userEmail = session.user.email;
+                userId = session.user.id;
+                accessToken = session.access_token;
                 if (userEmail === ADMIN_EMAIL) isAdmin = true;
-                loadFavorites();
+                await loadFavorites();
+            } else {
+                userEmail = "";
+                userId = null;
+                accessToken = null;
+                isAdmin = false;
+                userFavorites = [];
             }
 
             document.getElementById('premium-chips').style.display = isLoggedIn ? 'flex' : 'none';
             updateHeaderButtons();
         }
+
+        // Αυτόματη αναγνώριση όταν ο χρήστης πατάει το link επαναφοράς κωδικού από το email
+        window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'PASSWORD_RECOVERY' && session) {
+                isLoggedIn = true;
+                userEmail = session.user.email;
+                userId = session.user.id;
+                accessToken = session.access_token;
+                updateHeaderButtons();
+                switchView('account');
+                switchProfileTab('security');
+                showMsg('pwd-change-msg', 'Επιλέξτε τον νέο σας κωδικό πρόσβασης παρακάτω.', 'info');
+            }
+        });
 
         function updateHeaderButtons() {
             const existing = document.querySelector('.auth-buttons-wrapper');
@@ -557,11 +639,14 @@
             document.body.appendChild(authDiv);
         }
 
-        // ======== FETCH & RENDER BOOKS ========
+        // ======== FETCH & RENDER BOOKS (ΜΕ ΕΠΑΛΗΘΕΥΣΗ TOKEN) ========
         async function loadBooks() {
-            const container = document.getElementById('results');
             try {
-                const response = await fetch(`${window.location.origin}/search?q=&free_only=${!isLoggedIn}`);
+                const headers = {};
+                if (accessToken) {
+                    headers['Authorization'] = `Bearer ${accessToken}`;
+                }
+                const response = await fetch(`${window.location.origin}/search?q=`, { headers });
                 const data = await response.json();
                 allBooks = data.data || [];
                 searchBooks(); 
@@ -802,40 +887,135 @@
         window.showLogin = () => { document.getElementById('auth-modal').style.display = 'flex'; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = ''; document.getElementById('a-msg').style.display = 'none'; setAuthMode('login'); };
         window.hideLogin = () => { document.getElementById('auth-modal').style.display = 'none'; };
 
+        function validatePasswordRules(val, prefix) {
+            const lenObj = document.getElementById(`${prefix}rule-len`);
+            const upObj = document.getElementById(`${prefix}rule-up`);
+            const numObj = document.getElementById(`${prefix}rule-num`);
+            const engObj = document.getElementById(`${prefix}rule-eng`);
+
+            const okLen = val.length >= 6;
+            const okUp = /[A-Z]/.test(val);
+            const okNum = /[0-9]/.test(val);
+            const okEng = val.length > 0 && /^[\x21-\x7E]+$/.test(val);
+
+            okLen ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
+            okUp ? upObj.classList.add('valid') : upObj.classList.remove('valid');
+            okNum ? numObj.classList.add('valid') : numObj.classList.remove('valid');
+            okEng ? engObj.classList.add('valid') : engObj.classList.remove('valid');
+
+            return okLen && okUp && okNum && okEng;
+        }
+
         window.checkPassword = () => {
             if (currentMode !== 'register') return; 
-            const val = document.getElementById('a-password').value;
-            const lenObj = document.getElementById('rule-len'); const upObj = document.getElementById('rule-up'); const numObj = document.getElementById('rule-num'); const engObj = document.getElementById('rule-eng');
+            validatePasswordRules(document.getElementById('a-password').value, '');
+        };
 
-            val.length >= 6 ? lenObj.classList.add('valid') : lenObj.classList.remove('valid');
-            /[A-Z]/.test(val) ? upObj.classList.add('valid') : upObj.classList.remove('valid');
-            /[0-9]/.test(val) ? numObj.classList.add('valid') : numObj.classList.remove('valid');
-            if (val.length > 0 && /^[\x21-\x7E]+$/.test(val)) { engObj.classList.add('valid'); } else { engObj.classList.remove('valid'); }
+        window.checkProfilePassword = () => {
+            validatePasswordRules(document.getElementById('new-pwd').value, 'prof-');
         };
 
         window.setAuthMode = (mode) => {
-            currentMode = mode; document.getElementById('a-email').value = ''; document.getElementById('a-password').value = '';
-            document.getElementById('tab-login').classList.toggle('active', mode === 'login'); document.getElementById('tab-register').classList.toggle('active', mode === 'register');
-            document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
-            document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none'; document.getElementById('a-msg').style.display = 'none';
+            currentMode = mode;
+            document.getElementById('a-password').value = '';
+            document.getElementById('a-msg').style.display = 'none';
+
+            const isReset = mode === 'reset';
+            document.getElementById('auth-tabs-bar').style.display = isReset ? 'none' : 'flex';
+            document.getElementById('a-password-group').style.display = isReset ? 'none' : 'block';
+            document.getElementById('pwd-constraints').style.display = mode === 'register' ? 'flex' : 'none';
+            document.getElementById('forgot-pwd-btn').style.display = mode === 'login' ? 'inline-block' : 'none';
+            document.getElementById('back-to-login-btn').style.display = isReset ? 'inline-block' : 'none';
+
+            if (isReset) {
+                document.getElementById('auth-modal-header').innerText = 'Επαναφορά Κωδικού';
+                document.getElementById('auth-submit').innerText = 'Αποστολή Email Επαναφοράς';
+            } else {
+                document.getElementById('auth-modal-header').innerText = 'Πρόσβαση';
+                document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+                document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+                document.getElementById('auth-submit').innerText = mode === 'login' ? 'Σύνδεση' : 'Ολοκλήρωση Εγγραφής';
+            }
         };
 
         function showMsg(id, text, type) { const msgEl = document.getElementById(id); msgEl.style.display = 'block'; msgEl.className = 'msg-box'; msgEl.classList.add(`msg-${type}`); msgEl.innerText = text; }
 
         window.handleAuth = async () => {
-            const email = document.getElementById('a-email').value; const password = document.getElementById('a-password').value;
+            const email = document.getElementById('a-email').value.trim();
+            const password = document.getElementById('a-password').value;
+
+            if (currentMode === 'reset') {
+                if (!email) { showMsg('a-msg', "Παρακαλώ συμπληρώστε το email σας.", "error"); return; }
+                showMsg('a-msg', "Αποστολή email επαναφοράς...", "info");
+                const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin
+                });
+                if (error) {
+                    showMsg('a-msg', "Σφάλμα: " + error.message, "error");
+                } else {
+                    showMsg('a-msg', "Στάλθηκε email επαναφοράς! Ελέγξτε τα εισερχόμενα (και τα spam) σας.", "success");
+                }
+                return;
+            }
+
             if (!email || !password) { showMsg('a-msg', "Παρακαλώ συμπληρώστε email και κωδικό.", "error"); return; }
             showMsg('a-msg', "Επεξεργασία...", "info");
             
             if (currentMode === 'login') {
                 const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) { showMsg('a-msg', "Λάθος email ή κωδικός!", "error"); const passInput = document.getElementById('a-password'); passInput.value = ''; passInput.focus();
-                } else { location.reload(); }
+                if (error) {
+                    showMsg('a-msg', "Λάθος email ή κωδικός (ή δεν έχετε επιβεβαιώσει ακόμα το email σας).", "error");
+                    const passInput = document.getElementById('a-password');
+                    passInput.value = '';
+                    passInput.focus();
+                } else {
+                    location.reload();
+                }
             } else {
-                const isEnglishAndNoSpaces = /^[\x21-\x7E]+$/.test(password);
-                if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !isEnglishAndNoSpaces) { showMsg('a-msg', "Ο κωδικός δεν πληροί τις προϋποθέσεις.", "error"); return; }
-                const { error } = await window.supabaseClient.auth.signUp({ email, password });
-                if (error) { showMsg('a-msg', error.message, "error"); } else { showMsg('a-msg', "Επιτυχία! Συνδέεστε...", "success"); setTimeout(() => location.reload(), 1000); }
+                if (!validatePasswordRules(password, '')) {
+                    showMsg('a-msg', "Ο κωδικός δεν πληροί τις προϋποθέσεις.", "error");
+                    return;
+                }
+                const { data, error } = await window.supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: { emailRedirectTo: window.location.origin }
+                });
+                if (error) {
+                    showMsg('a-msg', error.message, "error");
+                } else if (data && data.session) {
+                    showMsg('a-msg', "Επιτυχία! Συνδέεστε...", "success");
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showMsg('a-msg', "Η εγγραφή ολοκληρώθηκε! Ελέγξτε το email σας (και τα spam) για να επιβεβαιώσετε τον λογαριασμό σας πριν συνδεθείτε.", "success");
+                }
+            }
+        };
+
+        // ======== ΑΛΛΑΓΗ ΚΩΔΙΚΟΥ ΑΠΟ ΤΟ ΠΡΟΦΙΛ ========
+        window.changePassword = async () => {
+            const newPwd = document.getElementById('new-pwd').value;
+            const confirmPwd = document.getElementById('confirm-pwd').value;
+
+            if (!validatePasswordRules(newPwd, 'prof-')) {
+                showMsg('pwd-change-msg', "Ο νέος κωδικός δεν πληροί τις προϋποθέσεις.", "error");
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showMsg('pwd-change-msg', "Οι δύο κωδικοί δεν ταιριάζουν.", "error");
+                return;
+            }
+
+            showMsg('pwd-change-msg', "Ενημέρωση κωδικού...", "info");
+            const { error } = await window.supabaseClient.auth.updateUser({ password: newPwd });
+
+            if (error) {
+                showMsg('pwd-change-msg', "Σφάλμα: " + error.message, "error");
+            } else {
+                showMsg('pwd-change-msg', "Ο κωδικός σας ενημερώθηκε με επιτυχία!", "success");
+                document.getElementById('new-pwd').value = '';
+                document.getElementById('confirm-pwd').value = '';
+                validatePasswordRules('', 'prof-');
             }
         };
 
