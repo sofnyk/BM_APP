@@ -180,6 +180,15 @@
         #pdf-frame { flex: 1; border: none; border-radius: 10px; background: #ddd; width: 100%; }
         .pdf-actions { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
 
+        /* PDF LOADING OVERLAY */
+        #pdf-loading-overlay .modal-content { width: 340px; padding: 30px 25px; }
+        .pdf-spinner { border: 4px solid var(--card-border); border-top: 4px solid var(--accent); border-radius: 50%; width: 42px; height: 42px; animation: spin 0.9s linear infinite; margin: 0 auto 15px auto; }
+        .progress-track { width: 100%; height: 10px; background: var(--card-border); border-radius: 10px; overflow: hidden; margin: 15px 0 10px 0; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.15s ease; }
+        #pdf-load-title { font-weight: 700; color: var(--primary); font-size: 1em; word-break: break-word; margin-bottom: 5px; }
+        #pdf-load-stats { font-size: 0.9em; color: #64748b; font-weight: 600; margin-bottom: 15px; }
+        .pdf-ready-actions { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
+
         .loader { display: none; border: 4px solid var(--card-border); border-top: 4px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -338,6 +347,22 @@
         </div>
     </div>
 
+    <div id="pdf-loading-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="pdf-load-spinner" class="pdf-spinner"></div>
+            <div id="pdf-load-title">Φόρτωση βιβλίου...</div>
+            <div class="progress-track">
+                <div id="pdf-progress-bar" class="progress-fill"></div>
+            </div>
+            <div id="pdf-load-stats">Σύνδεση με τον διακομιστή...</div>
+            <button id="pdf-cancel-btn" onclick="cancelPdfLoad()" class="submit-btn" style="background: var(--danger); margin-top: 0;">Ακύρωση</button>
+            <div id="pdf-ready-actions" class="pdf-ready-actions">
+                <a id="pdf-open-ready-btn" href="#" target="_blank" onclick="document.getElementById('pdf-loading-overlay').style.display='none'" class="pdf-btn" style="text-decoration:none; padding: 14px;">📖 Άνοιγμα PDF</a>
+                <button onclick="document.getElementById('pdf-loading-overlay').style.display='none'" class="view-btn">Κλείσιμο</button>
+            </div>
+        </div>
+    </div>
+
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" onclick="hideLogin()">&times;</button>
@@ -382,6 +407,9 @@
         
         let currentView = 'main'; 
         let showingFavorites = false; 
+
+        let currentPdfAbortController = null;
+        let currentBlobUrl = null;
 
         const ADMIN_EMAIL = "sofoklisnyk@gmail.com"; 
 
@@ -633,10 +661,115 @@
             localStorage.setItem('bm_view_pref', v);
         };
 
-        // ======== PDF, SEARCH, MODALS ========
-        window.openPdf = (url) => {     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);     if (isMobile) {         window.open(url, '_blank');     } else {         document.getElementById('pdf-frame').src = url;         document.getElementById('pdf-external-link').href = url;         document.getElementById('pdf-modal').style.display = 'flex';     } };
-        window.closePdf = () => { document.getElementById('pdf-modal').style.display = 'none'; document.getElementById('pdf-frame').src = ""; };
+        // ======== PDF LOADING & VIEWER ========
+        window.cancelPdfLoad = () => {
+            if (currentPdfAbortController) {
+                currentPdfAbortController.abort();
+                currentPdfAbortController = null;
+            }
+            document.getElementById('pdf-loading-overlay').style.display = 'none';
+        };
 
+        window.openPdf = async (url) => {
+            const overlay = document.getElementById('pdf-loading-overlay');
+            const titleEl = document.getElementById('pdf-load-title');
+            const barEl = document.getElementById('pdf-progress-bar');
+            const statsEl = document.getElementById('pdf-load-stats');
+            const spinnerEl = document.getElementById('pdf-load-spinner');
+            const readyActions = document.getElementById('pdf-ready-actions');
+            const openReadyBtn = document.getElementById('pdf-open-ready-btn');
+            const cancelBtn = document.getElementById('pdf-cancel-btn');
+
+            const displayName = decodeURIComponent(url.split('/').pop())
+                .replace(/\.pdf$/i, '')
+                .replace(/_/g, ' ');
+            titleEl.innerText = displayName;
+
+            barEl.style.width = '0%';
+            statsEl.innerText = 'Σύνδεση με τον διακομιστή...';
+            spinnerEl.style.display = 'block';
+            readyActions.style.display = 'none';
+            cancelBtn.style.display = 'inline-block';
+            overlay.style.display = 'flex';
+
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+            }
+
+            currentPdfAbortController = new AbortController();
+
+            try {
+                const response = await fetch(url, { signal: currentPdfAbortController.signal });
+                if (!response.ok) throw new Error(`Σφάλμα (${response.status})`);
+
+                const contentLength = response.headers.get('content-length');
+                const total = contentLength ? parseInt(contentLength, 10) : 0;
+                let loaded = 0;
+
+                const reader = response.body.getReader();
+                const chunks = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    chunks.push(value);
+                    loaded += value.length;
+
+                    const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
+                    if (total > 0) {
+                        const percent = Math.min(100, Math.round((loaded / total) * 100));
+                        const totalMB = (total / (1024 * 1024)).toFixed(1);
+                        barEl.style.width = percent + '%';
+                        statsEl.innerText = `${percent}% (${loadedMB} / ${totalMB} MB)`;
+                    } else {
+                        barEl.style.width = '100%';
+                        statsEl.innerText = `Λήψη: ${loadedMB} MB...`;
+                    }
+                }
+
+                const blob = new Blob(chunks, { type: 'application/pdf' });
+                currentBlobUrl = URL.createObjectURL(blob);
+                currentPdfAbortController = null;
+
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    spinnerEl.style.display = 'none';
+                    cancelBtn.style.display = 'none';
+                    barEl.style.width = '100%';
+                    statsEl.innerText = 'Το βιβλίο είναι έτοιμο!';
+                    openReadyBtn.href = currentBlobUrl;
+                    readyActions.style.display = 'flex';
+
+                    const opened = window.open(currentBlobUrl, '_blank');
+                    if (opened) {
+                        overlay.style.display = 'none';
+                    }
+                } else {
+                    overlay.style.display = 'none';
+                    document.getElementById('pdf-frame').src = currentBlobUrl;
+                    document.getElementById('pdf-external-link').href = currentBlobUrl;
+                    document.getElementById('pdf-modal').style.display = 'flex';
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.error(err);
+                spinnerEl.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                statsEl.innerText = 'Δοκιμάστε απευθείας άνοιγμα:';
+                openReadyBtn.href = url;
+                readyActions.style.display = 'flex';
+            }
+        };
+
+        window.closePdf = () => {
+            document.getElementById('pdf-modal').style.display = 'none';
+            document.getElementById('pdf-frame').src = "";
+        };
+
+        // ======== SEARCH & AUTH MODALS ========
         window.handleSearchInput = () => { const val = document.getElementById('searchInput').value; document.getElementById('clearSearchBtn').style.display = val.length > 0 ? 'block' : 'none'; searchBooks(); };
         window.clearSearch = () => { document.getElementById('searchInput').value = ''; document.getElementById('clearSearchBtn').style.display = 'none'; searchBooks(); };
         window.quickSearch = (term) => { document.getElementById('searchInput').value = term; handleSearchInput(); };
