@@ -634,7 +634,7 @@
         };
 
         // ======== PDF, SEARCH, MODALS ========
-        window.openPdf = (url) => { document.getElementById('pdf-frame').src = url; document.getElementById('pdf-external-link').href = url; document.getElementById('pdf-modal').style.display = 'flex'; };
+        window.openPdf = (url) => {     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);     if (isMobile) {         window.open(url, '_blank');     } else {         document.getElementById('pdf-frame').src = url;         document.getElementById('pdf-external-link').href = url;         document.getElementById('pdf-modal').style.display = 'flex';     } };
         window.closePdf = () => { document.getElementById('pdf-modal').style.display = 'none'; document.getElementById('pdf-frame').src = ""; };
 
         window.handleSearchInput = () => { const val = document.getElementById('searchInput').value; document.getElementById('clearSearchBtn').style.display = val.length > 0 ? 'block' : 'none'; searchBooks(); };
