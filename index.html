@@ -126,7 +126,7 @@
         .ptab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: #64748b; transition: 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .ptab:hover { color: var(--text-color); background: rgba(0,0,0,0.02); border-radius: 8px 8px 0 0; }
         .ptab.active { border-bottom-color: var(--accent); color: var(--text-color); }
-        .ptab.admin-tab.active { border-bottom-color: var(--admin-color); }
+        .ptab.admin-tab.active { border-bottom-color: var(--admin-color); color: var(--text-color); }
         .ptab-badge { background: var(--card-border); color: var(--text-color); padding: 2px 8px; border-radius: 20px; font-size: 0.85em; }
 
         .pcontent-section { display: none; animation: fadeIn 0.3s ease; }
@@ -138,7 +138,23 @@
         .stat-box p { margin: 0; color: #64748b; font-weight: 600; }
 
         /* ADMIN & SECURITY FORMS ΕΝΤΟΣ ΣΕΛΙΔΑΣ */
-        .admin-form-container { background: var(--white); border: 1px solid var(--card-border); border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 600px; }
+        .admin-form-container { background: var(--white); border: 1px solid var(--card-border); border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); max-width: 650px; }
+
+        /* ADMIN LISTS (BOOKS & ADMINS) */
+        .admin-search-input { width: 100%; padding: 12px 16px; border: 2px solid var(--card-border); border-radius: 10px; font-size: 1em; background: var(--white); color: var(--text-color); box-sizing: border-box; margin-bottom: 15px; outline: none; }
+        .admin-search-input:focus { border-color: var(--admin-color); }
+        .admin-list { display: flex; flex-direction: column; gap: 10px; }
+        .admin-row { background: var(--white); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .admin-row-info { flex: 1; min-width: 200px; }
+        .admin-row-title { font-weight: 700; color: var(--primary); font-size: 1.05em; }
+        .admin-row-meta { font-size: 0.88em; color: #64748b; margin-top: 3px; }
+        .admin-row-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .pill-btn { padding: 7px 12px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85em; cursor: pointer; transition: 0.2s; color: white; }
+        .pill-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .pill-free { background-color: var(--accent); }
+        .pill-premium { background-color: var(--premium-gold); }
+        .pill-edit { background-color: #3498db; }
+        .pill-delete { background-color: var(--danger); }
 
         /* ======== FOOTER ======== */
         .site-footer { background-color: #1a252f; color: #cbd5e1; text-align: center; padding: 25px 20px; font-size: 0.9em; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
@@ -321,10 +337,26 @@
                 
                 <div class="profile-main">
                     <div class="profile-tabs">
-                        <div class="ptab admin-tab active">➕ Προσθήκη Νέου Βιβλίου</div>
+                        <div class="ptab admin-tab active" onclick="switchAdminTab('books')" id="atab-books">
+                            📚 Διαχείριση Βιβλίων <span class="ptab-badge" id="admin-books-count">0</span>
+                        </div>
+                        <div class="ptab admin-tab" onclick="switchAdminTab('add')" id="atab-add">➕ Προσθήκη Βιβλίου</div>
+                        <div class="ptab admin-tab" onclick="switchAdminTab('admins')" id="atab-admins">
+                            👥 Διαχειριστές <span class="ptab-badge" id="admin-users-count">0</span>
+                        </div>
                     </div>
 
-                    <div class="pcontent-section active">
+                    <!-- ΚΑΡΤΕΛΑ 1: ΔΙΑΧΕΙΡΙΣΗ ΒΙΒΛΙΩΝ -->
+                    <div id="acontent-books" class="pcontent-section active">
+                        <input type="text" id="adminBookSearch" class="admin-search-input" placeholder="🔍 Αναζήτηση βιβλίου για επεξεργασία ή διαγραφή..." oninput="renderAdminBooks()">
+                        <div id="admin-books-msg" class="msg-box" style="margin-top:0; margin-bottom:15px;"></div>
+                        <div id="admin-books-list" class="admin-list">
+                            <p style="color:#64748b;">Φόρτωση βιβλίων...</p>
+                        </div>
+                    </div>
+
+                    <!-- ΚΑΡΤΕΛΑ 2: ΠΡΟΣΘΗΚΗ ΒΙΒΛΙΟΥ -->
+                    <div id="acontent-add" class="pcontent-section">
                         <div class="admin-form-container">
                             <div class="input-group admin-input">
                                 <label>Τίτλος Βιβλίου</label>
@@ -355,6 +387,23 @@
                             <div id="admin-msg" class="msg-box"></div>
                         </div>
                     </div>
+
+                    <!-- ΚΑΡΤΕΛΑ 3: ΔΙΑΧΕΙΡΙΣΤΕΣ -->
+                    <div id="acontent-admins" class="pcontent-section">
+                        <div class="admin-form-container" style="margin-bottom: 20px;">
+                            <h3 style="margin-top:0; color: var(--primary);">Προσθήκη Νέου Διαχειριστή</h3>
+                            <p style="color:#64748b; font-size:0.9em; margin-top:0;">Εισάγετε το email του χρήστη που θέλετε να αποκτήσει δικαιώματα διαχειριστή.</p>
+                            <form onsubmit="event.preventDefault(); addAdminUser();" style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <input type="email" id="new-admin-email" placeholder="email@example.com" required style="flex:1; min-width:220px; padding:12px 14px; border:2px solid var(--card-border); border-radius:10px; background:var(--input-bg); color:var(--text-color); font-size:1em;">
+                                <button type="submit" class="pill-btn" style="background: var(--admin-color); padding:12px 20px; font-size:0.95em;">➕ Προσθήκη</button>
+                            </form>
+                            <div id="admin-users-msg" class="msg-box"></div>
+                        </div>
+
+                        <div id="admin-users-list" class="admin-list">
+                            <p style="color:#64748b;">Φόρτωση διαχειριστών...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -367,6 +416,38 @@
             ✉️ Επικοινωνία: <a href="mailto:sofoklisnyk@gmail.com">sofoklisnyk@gmail.com</a>
         </div>
     </footer>
+
+    <!-- EDIT BOOK MODAL -->
+    <div id="edit-book-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 440px; text-align:left;">
+            <button type="button" class="close-modal" onclick="closeEditBookModal()">&times;</button>
+            <div class="modal-header" style="text-align:center;">✏️ Επεξεργασία Βιβλίου</div>
+            <form onsubmit="event.preventDefault(); saveBookEdits();">
+                <input type="hidden" id="edit-book-id">
+                <div class="input-group admin-input">
+                    <label for="edit-book-title">Τίτλος Βιβλίου</label>
+                    <input type="text" id="edit-book-title" required>
+                </div>
+                <div class="input-group admin-input">
+                    <label for="edit-book-author">Δημιουργός / Εκδότης</label>
+                    <input type="text" id="edit-book-author">
+                </div>
+                <div class="input-group admin-input">
+                    <label for="edit-book-year">Χρονολογία</label>
+                    <input type="text" id="edit-book-year" placeholder="π.χ. 1905">
+                </div>
+                <div class="input-group admin-input">
+                    <label for="edit-book-free">Πρόσβαση</label>
+                    <select id="edit-book-free">
+                        <option value="true">Δωρεάν (Όλοι)</option>
+                        <option value="false">Premium (Μόνο Συνδεδεμένοι)</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn" style="background: var(--accent);">💾 Αποθήκευση Αλλαγών</button>
+            </form>
+            <div id="edit-book-msg" class="msg-box"></div>
+        </div>
+    </div>
 
     <div id="pdf-modal" class="modal-overlay">
         <div class="modal-content">
@@ -441,6 +522,8 @@
         let accessToken = null;
         let currentMode = 'login';
         let allBooks = []; 
+        let adminBooks = [];
+        let adminUsers = [];
         let userFavorites = []; 
         
         let currentView = 'main'; 
@@ -449,7 +532,14 @@
         let currentPdfAbortController = null;
         let currentBlobUrl = null;
 
-        const ADMIN_EMAIL = "sofoklisnyk@gmail.com"; 
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         // ======== DARK MODE ========
         function toggleTheme() {
@@ -549,20 +639,21 @@
 
             if (viewName === 'main') {
                 showingFavorites = false;
-                searchBooks();
+                loadBooks();
             } else if (viewName === 'account') {
                 document.getElementById('prof-email').innerText = userEmail;
                 document.getElementById('stat-total-books').innerText = allBooks.length;
                 switchProfileTab('overview');
             } else if (viewName === 'admin') {
                 document.getElementById('admin-prof-email').innerText = userEmail;
+                switchAdminTab('books');
             }
 
             updateHeaderButtons();
         };
 
         window.switchProfileTab = (tabName) => {
-            document.querySelectorAll('.ptab:not(.admin-tab)').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#account-view .ptab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('#account-view .pcontent-section').forEach(c => c.classList.remove('active'));
             
             document.getElementById('ptab-' + tabName).classList.add('active');
@@ -576,7 +667,21 @@
             }
         };
 
-        // ======== SETUP AUTH & PASSWORD RECOVERY ========
+        window.switchAdminTab = (tabName) => {
+            document.querySelectorAll('#admin-view .ptab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#admin-view .pcontent-section').forEach(c => c.classList.remove('active'));
+
+            document.getElementById('atab-' + tabName).classList.add('active');
+            document.getElementById('acontent-' + tabName).classList.add('active');
+
+            if (tabName === 'books') {
+                loadAdminBooks();
+            } else if (tabName === 'admins') {
+                loadAdminUsers();
+            }
+        };
+
+        // ======== SETUP AUTH & ADMIN CHECK (ΑΠΟ ΤΟΝ SERVER) ========
         async function setupAuth() {
             const { data: { session } } = await window.supabaseClient.auth.getSession();
             isLoggedIn = !!session;
@@ -585,7 +690,17 @@
                 userEmail = session.user.email;
                 userId = session.user.id;
                 accessToken = session.access_token;
-                if (userEmail === ADMIN_EMAIL) isAdmin = true;
+
+                try {
+                    const res = await fetch(`${window.location.origin}/admin/me`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    const adminData = await res.json();
+                    isAdmin = !!adminData.is_admin;
+                } catch (e) {
+                    isAdmin = false;
+                }
+
                 await loadFavorites();
             } else {
                 userEmail = "";
@@ -599,7 +714,6 @@
             updateHeaderButtons();
         }
 
-        // Αυτόματη αναγνώριση όταν ο χρήστης πατάει το link επαναφοράς κωδικού από το email
         window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY' && session) {
                 isLoggedIn = true;
@@ -701,8 +815,8 @@
                 <div class="book-card">
                     ${favBtnHtml}
                     <div>
-                        <div class="book-title">${book.title}</div>
-                        <div class="book-meta"><div>👤 ${book.author_publisher || 'Άγνωστος'}</div><div>📅 Έτος: ${book.publication_year || 'Χ.Χ.'}</div></div>
+                        <div class="book-title">${escapeHtml(book.title)}</div>
+                        <div class="book-meta"><div>👤 ${escapeHtml(book.author_publisher || 'Άγνωστος')}</div><div>📅 Έτος: ${escapeHtml(book.publication_year || 'Χ.Χ.')}</div></div>
                     </div>
                     <div class="pdf-buttons">${buttons}</div>
                 </div>
@@ -764,6 +878,268 @@
             document.getElementById('gridBtn').classList.toggle('active', v === 'grid');
             document.getElementById('listBtn').classList.toggle('active', v === 'list');
             localStorage.setItem('bm_view_pref', v);
+        };
+
+        // ======== ADMIN: ΔΙΑΧΕΙΡΙΣΗ ΒΙΒΛΙΩΝ (ΕΠΕΞΕΡΓΑΣΙΑ, TOGGLE, ΔΙΑΓΡΑΦΗ) ========
+        async function loadAdminBooks() {
+            const listEl = document.getElementById('admin-books-list');
+            listEl.innerHTML = '<p style="color:#64748b;">Φόρτωση βιβλίων...</p>';
+            try {
+                const res = await fetch(`${window.location.origin}/admin/books`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    adminBooks = data.data || [];
+                    document.getElementById('admin-books-count').innerText = adminBooks.length;
+                    renderAdminBooks();
+                } else {
+                    listEl.innerHTML = `<p style="color:var(--danger);">Σφάλμα: ${escapeHtml(data.message || data.detail)}</p>`;
+                }
+            } catch (e) {
+                listEl.innerHTML = '<p style="color:var(--danger);">Αποτυχία φόρτωσης βιβλίων.</p>';
+            }
+        }
+
+        window.renderAdminBooks = () => {
+            const q = window.normalizeText(document.getElementById('adminBookSearch').value);
+            const listEl = document.getElementById('admin-books-list');
+            const filtered = adminBooks.filter(b =>
+                window.normalizeText(b.title).includes(q) ||
+                window.normalizeText(b.author_publisher).includes(q)
+            );
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">Δεν βρέθηκαν βιβλία.</p>';
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(book => {
+                const isFree = !!book.is_free;
+                const statusClass = isFree ? 'pill-free' : 'pill-premium';
+                const statusLabel = isFree ? '🟢 Δωρεάν' : '⭐ Premium';
+                const noFileNote = !book.file_key ? ' • <span style="color:var(--danger);">Χωρίς PDF</span>' : '';
+
+                return `
+                    <div class="admin-row">
+                        <div class="admin-row-info">
+                            <div class="admin-row-title">${escapeHtml(book.title)}</div>
+                            <div class="admin-row-meta">
+                                👤 ${escapeHtml(book.author_publisher || 'Άγνωστος')} • 📅 ${escapeHtml(book.publication_year || 'Χ.Χ.')}${noFileNote}
+                            </div>
+                        </div>
+                        <div class="admin-row-actions">
+                            <button class="pill-btn ${statusClass}" onclick="toggleBookFree(${book.id})" title="Αλλαγή μεταξύ Δωρεάν και Premium">${statusLabel}</button>
+                            <button class="pill-btn pill-edit" onclick="openEditBookModal(${book.id})">✏️ Επεξεργασία</button>
+                            <button class="pill-btn pill-delete" onclick="deleteBook(${book.id})">🗑️ Διαγραφή</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.toggleBookFree = async (bookId) => {
+            const book = adminBooks.find(b => b.id === bookId);
+            if (!book) return;
+            const nextFree = !book.is_free;
+
+            try {
+                const res = await fetch(`${window.location.origin}/admin/books/${bookId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        title: book.title,
+                        author_publisher: book.author_publisher || '',
+                        publication_year: book.publication_year ? String(book.publication_year) : '',
+                        is_free: nextFree
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    book.is_free = nextFree;
+                    renderAdminBooks();
+                } else {
+                    showMsg('admin-books-msg', 'Σφάλμα: ' + (data.message || data.detail), 'error');
+                }
+            } catch (e) {
+                showMsg('admin-books-msg', 'Σφάλμα επικοινωνίας με τον server.', 'error');
+            }
+        };
+
+        window.openEditBookModal = (bookId) => {
+            const book = adminBooks.find(b => b.id === bookId);
+            if (!book) return;
+            document.getElementById('edit-book-id').value = book.id;
+            document.getElementById('edit-book-title').value = book.title || '';
+            document.getElementById('edit-book-author').value = book.author_publisher || '';
+            document.getElementById('edit-book-year').value = book.publication_year || '';
+            document.getElementById('edit-book-free').value = book.is_free ? 'true' : 'false';
+            document.getElementById('edit-book-msg').style.display = 'none';
+            document.getElementById('edit-book-modal').style.display = 'flex';
+        };
+
+        window.closeEditBookModal = () => {
+            document.getElementById('edit-book-modal').style.display = 'none';
+        };
+
+        window.saveBookEdits = async () => {
+            const bookId = parseInt(document.getElementById('edit-book-id').value, 10);
+            const title = document.getElementById('edit-book-title').value.trim();
+            const author = document.getElementById('edit-book-author').value.trim();
+            const year = document.getElementById('edit-book-year').value.trim();
+            const isFree = document.getElementById('edit-book-free').value === 'true';
+
+            if (!title) {
+                showMsg('edit-book-msg', 'Ο τίτλος είναι υποχρεωτικός.', 'error');
+                return;
+            }
+
+            showMsg('edit-book-msg', 'Αποθήκευση...', 'info');
+            try {
+                const res = await fetch(`${window.location.origin}/admin/books/${bookId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        title,
+                        author_publisher: author,
+                        publication_year: year,
+                        is_free: isFree
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    closeEditBookModal();
+                    showMsg('admin-books-msg', 'Το βιβλίο ενημερώθηκε επιτυχώς!', 'success');
+                    await loadAdminBooks();
+                } else {
+                    showMsg('edit-book-msg', 'Σφάλμα: ' + (data.message || data.detail), 'error');
+                }
+            } catch (e) {
+                showMsg('edit-book-msg', 'Αποτυχία επικοινωνίας με τον server.', 'error');
+            }
+        };
+
+        window.deleteBook = async (bookId) => {
+            const book = adminBooks.find(b => b.id === bookId);
+            if (!book) return;
+            if (!confirm(`Σίγουρα θέλετε να διαγράψετε το βιβλίο «${book.title}» από τη βάση;`)) return;
+
+            try {
+                const res = await fetch(`${window.location.origin}/admin/books/${bookId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showMsg('admin-books-msg', 'Το βιβλίο διαγράφηκε.', 'success');
+                    await loadAdminBooks();
+                } else {
+                    showMsg('admin-books-msg', 'Σφάλμα: ' + (data.message || data.detail), 'error');
+                }
+            } catch (e) {
+                showMsg('admin-books-msg', 'Σφάλμα επικοινωνίας με τον server.', 'error');
+            }
+        };
+
+        // ======== ADMIN: ΔΙΑΧΕΙΡΙΣΗ ΔΙΑΧΕΙΡΙΣΤΩΝ ========
+        async function loadAdminUsers() {
+            const listEl = document.getElementById('admin-users-list');
+            listEl.innerHTML = '<p style="color:#64748b;">Φόρτωση διαχειριστών...</p>';
+            try {
+                const res = await fetch(`${window.location.origin}/admin/admins`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    adminUsers = data.data || [];
+                    document.getElementById('admin-users-count').innerText = adminUsers.length;
+                    renderAdminUsers();
+                } else {
+                    listEl.innerHTML = `<p style="color:var(--danger);">Σφάλμα: ${escapeHtml(data.message || data.detail)}</p>`;
+                }
+            } catch (e) {
+                listEl.innerHTML = '<p style="color:var(--danger);">Αποτυχία φόρτωσης διαχειριστών.</p>';
+            }
+        }
+
+        function renderAdminUsers() {
+            const listEl = document.getElementById('admin-users-list');
+            if (adminUsers.length === 0) {
+                listEl.innerHTML = '<p style="color:#64748b;">Δεν υπάρχουν διαχειριστές.</p>';
+                return;
+            }
+
+            listEl.innerHTML = adminUsers.map(adm => {
+                const isSelf = adm.email.toLowerCase() === userEmail.toLowerCase();
+                const dateStr = adm.created_at ? new Date(adm.created_at).toLocaleDateString('el-GR') : '';
+                const actionHtml = isSelf
+                    ? `<span style="font-size:0.85em; color:#64748b; font-weight:600;">(Εσείς)</span>`
+                    : `<button class="pill-btn pill-delete" onclick="removeAdminUser(${adm.id}, '${escapeHtml(adm.email)}')">🗑️ Αφαίρεση</button>`;
+
+                return `
+                    <div class="admin-row">
+                        <div class="admin-row-info">
+                            <div class="admin-row-title">⚙️ ${escapeHtml(adm.email)}</div>
+                            <div class="admin-row-meta">Προστέθηκε: ${dateStr}</div>
+                        </div>
+                        <div class="admin-row-actions">${actionHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.addAdminUser = async () => {
+            const input = document.getElementById('new-admin-email');
+            const email = input.value.trim();
+            if (!email) return;
+
+            showMsg('admin-users-msg', 'Προσθήκη διαχειριστή...', 'info');
+            try {
+                const res = await fetch(`${window.location.origin}/admin/admins`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    input.value = '';
+                    showMsg('admin-users-msg', data.message, 'success');
+                    await loadAdminUsers();
+                } else {
+                    showMsg('admin-users-msg', 'Σφάλμα: ' + (data.message || data.detail), 'error');
+                }
+            } catch (e) {
+                showMsg('admin-users-msg', 'Αποτυχία επικοινωνίας με τον server.', 'error');
+            }
+        };
+
+        window.removeAdminUser = async (adminId, email) => {
+            if (!confirm(`Να αφαιρεθούν τα δικαιώματα διαχειριστή από το ${email};`)) return;
+
+            try {
+                const res = await fetch(`${window.location.origin}/admin/admins/${adminId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showMsg('admin-users-msg', data.message, 'success');
+                    await loadAdminUsers();
+                } else {
+                    showMsg('admin-users-msg', 'Σφάλμα: ' + (data.message || data.detail), 'error');
+                }
+            } catch (e) {
+                showMsg('admin-users-msg', 'Αποτυχία επικοινωνίας με τον server.', 'error');
+            }
         };
 
         // ======== PDF LOADING & VIEWER ========
