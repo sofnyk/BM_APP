@@ -62,7 +62,7 @@ def serve_sitemap():
 
 
 @app.get("/pdf/{file_path:path}")
-async def proxy_pdf(file_path: str):
+async def proxy_pdf(file_path: str, download: bool = False):
     r2_url = f"{R2_STORAGE_URL}/{urllib.parse.quote(file_path, safe='/')}"
     client = httpx.AsyncClient(timeout=60.0)
     req = client.build_request("GET", r2_url)
@@ -81,8 +81,12 @@ async def proxy_pdf(file_path: str):
             await r.aclose()
             await client.aclose()
 
+    filename = os.path.basename(file_path)
+    encoded_filename = urllib.parse.quote(filename)
+    disposition = "attachment" if download else "inline"
+
     headers = {
-        "Content-Disposition": "inline",
+        "Content-Disposition": f"{disposition}; filename*=UTF-8''{encoded_filename}",
         "Cache-Control": "public, max-age=86400",
     }
     if "content-length" in r.headers:
@@ -124,7 +128,6 @@ def search_books(q: str = "", free_only: bool = False):
                 if f.startswith('http'):
                     clean_urls.append(f)
                 else:
-                    # Σερβίρουμε το PDF μέσω του proxy μας ώστε να ανοίγει και σε 4G/5G
                     clean_urls.append(f"/pdf/{urllib.parse.quote(f, safe='/')}")
 
             book['pdf_urls'] = clean_urls
