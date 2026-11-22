@@ -286,21 +286,23 @@
                     <div id="pcontent-security" class="pcontent-section">
                         <div class="admin-form-container">
                             <h3 style="margin-top:0; color: var(--primary);">Αλλαγή Κωδικού Πρόσβασης</h3>
-                            <div class="input-group admin-input">
-                                <label>Νέος Κωδικός</label>
-                                <input type="password" id="new-pwd" placeholder="Εισάγετε νέο κωδικό" oninput="checkProfilePassword()">
-                            </div>
-                            <div class="input-group admin-input">
-                                <label>Επιβεβαίωση Νέου Κωδικού</label>
-                                <input type="password" id="confirm-pwd" placeholder="Επαναλάβετε τον νέο κωδικό" onkeypress="if(event.key === 'Enter') changePassword()">
-                            </div>
-                            <div id="prof-pwd-constraints" class="pwd-rules" style="display:flex;">
-                                <div id="prof-rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
-                                <div id="prof-rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
-                                <div id="prof-rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
-                                <div id="prof-rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
-                            </div>
-                            <button onclick="changePassword()" class="submit-btn" style="background: var(--accent);">Ενημέρωση Κωδικού</button>
+                            <form onsubmit="event.preventDefault(); changePassword();">
+                                <div class="input-group admin-input">
+                                    <label for="new-pwd">Νέος Κωδικός</label>
+                                    <input type="password" id="new-pwd" name="new-password" autocomplete="new-password" placeholder="Εισάγετε νέο κωδικό" oninput="checkProfilePassword()">
+                                </div>
+                                <div class="input-group admin-input">
+                                    <label for="confirm-pwd">Επιβεβαίωση Νέου Κωδικού</label>
+                                    <input type="password" id="confirm-pwd" name="confirm-password" autocomplete="new-password" placeholder="Επαναλάβετε τον νέο κωδικό">
+                                </div>
+                                <div id="prof-pwd-constraints" class="pwd-rules" style="display:flex;">
+                                    <div id="prof-rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
+                                    <div id="prof-rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
+                                    <div id="prof-rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
+                                    <div id="prof-rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
+                                </div>
+                                <button type="submit" class="submit-btn" style="background: var(--accent);">Ενημέρωση Κωδικού</button>
+                            </form>
                             <div id="pwd-change-msg" class="msg-box"></div>
                         </div>
                     </div>
@@ -396,29 +398,31 @@
 
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal" onclick="hideLogin()">&times;</button>
+            <button type="button" class="close-modal" onclick="hideLogin()">&times;</button>
             <div id="auth-modal-header" class="modal-header">Πρόσβαση</div>
             <div id="auth-tabs-bar" class="auth-tabs">
                 <div id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">Σύνδεση</div>
                 <div id="tab-register" class="auth-tab" onclick="setAuthMode('register')">Εγγραφή</div>
             </div>
-            <div class="input-group">
-                <span class="input-icon">📧</span>
-                <input type="email" id="a-email" placeholder="Το Email σας" onkeypress="if(event.key === 'Enter') handleAuth()">
-            </div>
-            <div id="a-password-group" class="input-group">
-                <span class="input-icon">🔒</span>
-                <input type="password" id="a-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()" onkeypress="if(event.key === 'Enter') handleAuth()">
-            </div>
-            <div id="pwd-constraints" class="pwd-rules">
-                <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
-                <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
-                <div id="rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
-                <div id="rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
-            </div>
-            <button id="auth-submit" onclick="handleAuth()" class="submit-btn">Σύνδεση</button>
-            <button id="forgot-pwd-btn" class="forgot-link" onclick="setAuthMode('reset')">Ξέχασα τον κωδικό μου</button>
-            <button id="back-to-login-btn" class="forgot-link" style="display:none;" onclick="setAuthMode('login')">← Επιστροφή στη Σύνδεση</button>
+            <form id="auth-form" onsubmit="event.preventDefault(); handleAuth();">
+                <div class="input-group">
+                    <span class="input-icon">📧</span>
+                    <input type="email" id="a-email" name="email" autocomplete="username" placeholder="Το Email σας" required>
+                </div>
+                <div id="a-password-group" class="input-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="a-password" name="password" autocomplete="current-password" placeholder="Ο Κωδικός σας" oninput="checkPassword()">
+                </div>
+                <div id="pwd-constraints" class="pwd-rules">
+                    <div id="rule-len" class="pwd-rule">Τουλάχιστον 6 χαρακτήρες</div>
+                    <div id="rule-up" class="pwd-rule">Τουλάχιστον 1 κεφαλαίο (A-Z)</div>
+                    <div id="rule-num" class="pwd-rule">Τουλάχιστον 1 αριθμό</div>
+                    <div id="rule-eng" class="pwd-rule">Μόνο Αγγλικά</div>
+                </div>
+                <button id="auth-submit" type="submit" class="submit-btn">Σύνδεση</button>
+            </form>
+            <button type="button" id="forgot-pwd-btn" class="forgot-link" onclick="setAuthMode('reset')">Ξέχασα τον κωδικό μου</button>
+            <button type="button" id="back-to-login-btn" class="forgot-link" style="display:none;" onclick="setAuthMode('login')">← Επιστροφή στη Σύνδεση</button>
             <div id="a-msg" class="msg-box"></div>
         </div>
     </div>
@@ -917,7 +921,9 @@
 
         window.setAuthMode = (mode) => {
             currentMode = mode;
-            document.getElementById('a-password').value = '';
+            const passInput = document.getElementById('a-password');
+            passInput.value = '';
+            passInput.setAttribute('autocomplete', mode === 'register' ? 'new-password' : 'current-password');
             document.getElementById('a-msg').style.display = 'none';
 
             const isReset = mode === 'reset';
