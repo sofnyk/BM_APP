@@ -16,7 +16,6 @@
     <style>
         :root { 
             /* Φωτεινό Θέμα */
-            /* Φωτεινό Θέμα */
             --primary: #2c3e50; 
             --accent: #27ae60; 
             --bg: #f8fafc; 
@@ -105,6 +104,9 @@
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
         .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
+
+        /* SEO ABOUT SECTION */
+        .seo-about { max-width: 900px; margin: 10px auto 30px auto; padding: 0 20px; text-align: center; color: #64748b; font-size: 0.92em; line-height: 1.6; }
 
         /* ======== ΠΡΟΦΙΛ / ΔΙΑΧΕΙΡΙΣΗ (GITHUB STYLE) ======== */
         .profile-container { display: flex; max-width: 1200px; margin: 40px auto; padding: 0 20px; gap: 40px; flex-wrap: wrap; width: 100%; box-sizing: border-box; }
@@ -222,6 +224,10 @@
             </div>
 
             <div class="results-container" id="results"></div>
+
+            <section class="seo-about">
+                <p>Το <strong>Ψηφιακό Αναλόγιο</strong> είναι μια οργανωμένη ψηφιακή βιβλιοθήκη Βυζαντινής Μουσικής με κλασικά και νεότερα μουσικά βιβλία σε μορφή PDF — όπως Αναστασιματάρια, Δοξαστάρια, Ειρμολόγια, Τυπικό και λειτουργικά κείμενα — με άμεση αναζήτηση, ταξινόμηση και υποστήριξη σελιδοδεικτών (🔖) για εύκολη χρήση στο αναλόγιο.</p>
+            </section>
         </div>
 
         <div id="account-view">
@@ -377,7 +383,6 @@
         let currentView = 'main'; 
         let showingFavorites = false; 
 
-        // Η ΑΛΛΑΓΗ ΤΟΥ EMAIL ΕΓΙΝΕ ΕΔΩ:
         const ADMIN_EMAIL = "sofoklisnyk@gmail.com"; 
 
         // ======== DARK MODE ========
@@ -541,25 +546,19 @@
                 let originalFileName = decodeURIComponent(url.split('/').pop());
                 let fileName = originalFileName;
                 
-                // Αφαίρεση του timestamp του Supabase αν υπάρχει στην αρχή
                 if (/^\d+_/.test(fileName)) {
                     fileName = fileName.substring(fileName.indexOf('_') + 1);
                 }
 
-                // Ελέγχουμε αν υπάρχει ο όρος 'bkm' στο αρχείο (αδιαφορώντας για κεφαλαία/μικρά)
                 const hasBkm = /bkm/i.test(fileName);
                 const bkmIcon = hasBkm ? ' 🔖' : '';
 
-                // Καθαρίζουμε το όνομα για να φαίνεται όμορφο (βγάζουμε το .pdf, το bkm και τις κάτω παύλες)
                 let cleanName = fileName.replace(/\.pdf$/i, '')
                                         .replace(/_?bkm_?/i, '')
                                         .replace(/_/g, ' ')
                                         .trim();
 
-                // Αν το βιβλίο έχει πάνω από 1 αρχείο δείχνουμε το όνομα, αλλιώς "Άνοιγμα"
                 let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmIcon}` : `📖 Άνοιγμα${bkmIcon}`;
-                
-                // Προσθέτουμε τίτλο-επεξήγηση στο tooltip αν έχει σελιδοδείκτες
                 let tooltip = hasBkm ? `${fileName} (Με Σελιδοδείκτες)` : fileName;
 
                 return `<button onclick="openPdf('${url}')" class="pdf-btn" title="${tooltip}">${label}</button>`;
@@ -602,7 +601,6 @@
             container.innerHTML = filtered.map(b => createBookHTML(b)).join('');
         };
 
-        // Για να διατηρήσει το functionality του παλιού dropdown
         window.renderBooks = () => {
             searchBooks();
         };
@@ -710,7 +708,6 @@
 
                 document.getElementById('admin-loader').style.display = 'none'; showMsg('admin-msg', "Το βιβλίο προστέθηκε με επιτυχία!", "success");
                 
-                // Καθαρισμός πεδίων
                 document.getElementById('add-title').value = '';
                 document.getElementById('add-author').value = '';
                 document.getElementById('add-year').value = '';
