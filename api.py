@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Response, HTTPException
+from fastapi import FastAPI, Response, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
+from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import urllib.parse
@@ -17,9 +18,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Η ΒΑΣΗ ΣΤΟ CLOUD (Supabase) & STORAGE (Cloudflare R2) ---
+# --- ΒΑΣΗ (Supabase), AUTH & STORAGE (Cloudflare R2) ---
 DB_URL = "postgresql://postgres.kfaodzjcdtmwwxwyzasq:SupaSofos02%23@aws-1-eu-central-1.pooler.supabase.com:6543/postgres"
 R2_STORAGE_URL = "https://pub-fba8694ecb8b4b62b4b01308c630548c.r2.dev"
+SUPABASE_URL = "https://kfaodzjcdtmwwxwyzasq.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmYW9kempjZHRtd3d4d3l6YXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTUyOTQsImV4cCI6MjA5MjkzMTI5NH0.YhmIdxKx51KgCiYRaSlSlgVhoM8EAM3qdKBHlBnx1s8"
 
 
 class LinkRequest(BaseModel):
@@ -31,6 +34,26 @@ class NewBook(BaseModel):
     title: str
     author_publisher: str = ""
     publication_year: str = ""
+
+
+async def verify_supabase_token(authorization: Optional[str]) -> bool:
+    if not authorization or not authorization.startswith("Bearer "):
+        return False
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{SUPABASE_URL}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "apikey": SUPABASE_ANON_KEY,
+                },
+            )
+            return resp.status_code == 200
+    except Exception:
+        return False
 
 
 @app.get("/")
@@ -100,8 +123,15 @@ async def proxy_pdf(file_path: str, download: bool = False):
 
 
 @app.get("/search")
-def search_books(q: str = "", free_only: bool = False):
+async def search_books(
+    q: str = "",
+    free_only: bool = False,
+    authorization: Optional[str] = Header(default=None),
+):
     try:
+        # Επαλήθευση πραγματικής σύνδεσης από τον server
+        is_authenticated = await verify_supabase_token(authorization)
+
         conn = psycopg2.connect(DB_URL)
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -111,7 +141,7 @@ def search_books(q: str = "", free_only: bool = False):
             AND file_key IS NOT NULL
         """
 
-        if free_only:
+        if not is_authenticated or free_only:
             query += " AND is_free = TRUE"
 
         query += " ORDER BY title ASC;"
