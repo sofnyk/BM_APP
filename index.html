@@ -98,12 +98,15 @@
         @keyframes pop { 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
         .pdf-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+        .pdf-btn-group { display: flex; flex: 1; min-width: 160px; gap: 6px; }
         .pdf-btn { background-color: var(--accent); color: white; text-decoration: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 0.9em; flex: 1; text-align: center; transition: 0.2s; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 0 #1e8449; }
         .pdf-btn:hover { background-color: #2ecc71; transform: translateY(2px); box-shadow: 0 2px 0 #1e8449; }
+        .download-btn { background-color: #3498db; color: white; text-decoration: none; padding: 12px 14px; border-radius: 10px; font-weight: 700; font-size: 0.9em; display: flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; border: none; box-shadow: 0 4px 0 #2471a3; flex: 0 0 auto; }
+        .download-btn:hover { background-color: #2980b9; transform: translateY(2px); box-shadow: 0 2px 0 #2471a3; }
 
         .results-container.list-view { display: flex; flex-direction: column; gap: 15px; }
         .results-container.list-view .book-card { flex-direction: row; align-items: center; padding: 15px 30px; }
-        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 200px; }
+        .results-container.list-view .pdf-buttons { margin-top: 0; margin-left: 20px; min-width: 220px; }
 
         /* SEO ABOUT SECTION */
         .seo-about { max-width: 900px; margin: 10px auto 30px auto; padding: 0 20px; text-align: center; color: #64748b; font-size: 0.92em; line-height: 1.6; }
@@ -178,7 +181,7 @@
         /* PDF VIEWER MODAL */
         #pdf-modal .modal-content { width: 90%; height: 90%; padding: 50px 20px 20px 20px; display: flex; flex-direction: column; }
         #pdf-frame { flex: 1; border: none; border-radius: 10px; background: #ddd; width: 100%; }
-        .pdf-actions { margin-top: 10px; display: flex; justify-content: center; gap: 10px; }
+        .pdf-actions { margin-top: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
         /* PDF LOADING OVERLAY */
         #pdf-loading-overlay .modal-content { width: 340px; padding: 30px 25px; }
@@ -343,6 +346,7 @@
             <iframe id="pdf-frame" src=""></iframe>
             <div class="pdf-actions">
                 <a id="pdf-external-link" href="#" target="_blank" class="view-btn" style="text-decoration:none;">Άνοιγμα σε νέα καρτέλα</a>
+                <a id="pdf-download-link" href="#" download="" class="view-btn" style="text-decoration:none; background: #3498db; color: white; border-color: #3498db;">⬇️ Λήψη PDF</a>
             </div>
         </div>
     </div>
@@ -358,6 +362,7 @@
             <button id="pdf-cancel-btn" onclick="cancelPdfLoad()" class="submit-btn" style="background: var(--danger); margin-top: 0;">Ακύρωση</button>
             <div id="pdf-ready-actions" class="pdf-ready-actions">
                 <a id="pdf-open-ready-btn" href="#" target="_blank" onclick="document.getElementById('pdf-loading-overlay').style.display='none'" class="pdf-btn" style="text-decoration:none; padding: 14px;">📖 Άνοιγμα PDF</a>
+                <a id="pdf-download-ready-btn" href="#" download="" class="download-btn" style="padding: 14px;">⬇️ Αποθήκευση (Λήψη)</a>
                 <button onclick="document.getElementById('pdf-loading-overlay').style.display='none'" class="view-btn">Κλείσιμο</button>
             </div>
         </div>
@@ -589,7 +594,18 @@
                 let label = book.pdf_urls.length > 1 ? `📖 ${cleanName}${bkmIcon}` : `📖 Άνοιγμα${bkmIcon}`;
                 let tooltip = hasBkm ? `${fileName} (Με Σελιδοδείκτες)` : fileName;
 
-                return `<button onclick="openPdf('${url}')" class="pdf-btn" title="${tooltip}">${label}</button>`;
+                const safeUrl = url.replace(/'/g, "\\'");
+                const safeDownloadName = originalFileName.replace(/"/g, '&quot;');
+                const downloadUrl = url.startsWith('/pdf/')
+                    ? `${url}?download=1`
+                    : `${url}${url.includes('?') ? '&' : '?'}download=`;
+
+                return `
+                    <div class="pdf-btn-group">
+                        <button onclick="openPdf('${safeUrl}')" class="pdf-btn" title="${tooltip}">${label}</button>
+                        <a href="${downloadUrl}" download="${safeDownloadName}" class="download-btn" title="Λήψη: ${fileName}">⬇️</a>
+                    </div>
+                `;
             }).join('');
 
             return `
@@ -678,9 +694,12 @@
             const spinnerEl = document.getElementById('pdf-load-spinner');
             const readyActions = document.getElementById('pdf-ready-actions');
             const openReadyBtn = document.getElementById('pdf-open-ready-btn');
+            const downloadReadyBtn = document.getElementById('pdf-download-ready-btn');
+            const downloadModalBtn = document.getElementById('pdf-download-link');
             const cancelBtn = document.getElementById('pdf-cancel-btn');
 
-            const displayName = decodeURIComponent(url.split('/').pop())
+            const rawFileName = decodeURIComponent(url.split('/').pop());
+            const displayName = rawFileName
                 .replace(/\.pdf$/i, '')
                 .replace(/_/g, ' ');
             titleEl.innerText = displayName;
@@ -741,6 +760,8 @@
                     barEl.style.width = '100%';
                     statsEl.innerText = 'Το βιβλίο είναι έτοιμο!';
                     openReadyBtn.href = currentBlobUrl;
+                    downloadReadyBtn.href = currentBlobUrl;
+                    downloadReadyBtn.setAttribute('download', rawFileName);
                     readyActions.style.display = 'flex';
 
                     const opened = window.open(currentBlobUrl, '_blank');
@@ -751,6 +772,8 @@
                     overlay.style.display = 'none';
                     document.getElementById('pdf-frame').src = currentBlobUrl;
                     document.getElementById('pdf-external-link').href = currentBlobUrl;
+                    downloadModalBtn.href = currentBlobUrl;
+                    downloadModalBtn.setAttribute('download', rawFileName);
                     document.getElementById('pdf-modal').style.display = 'flex';
                 }
             } catch (err) {
@@ -758,8 +781,10 @@
                 console.error(err);
                 spinnerEl.style.display = 'none';
                 cancelBtn.style.display = 'none';
-                statsEl.innerText = 'Δοκιμάστε απευθείας άνοιγμα:';
+                statsEl.innerText = 'Δοκιμάστε απευθείας άνοιγμα ή λήψη:';
                 openReadyBtn.href = url;
+                downloadReadyBtn.href = url.startsWith('/pdf/') ? `${url}?download=1` : url;
+                downloadReadyBtn.setAttribute('download', rawFileName);
                 readyActions.style.display = 'flex';
             }
         };
